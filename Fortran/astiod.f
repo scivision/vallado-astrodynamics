@@ -81,7 +81,7 @@
 *      SUBROUTINE TARGET      ( RInt,VInt,RTgt,VTgt, Dm,Kind, Dtsec,
 *     &                         V1t,V2t,DV1,DV2, Error  )
 *
-*
+*
 * ---------------------------------------------------------------------------
 *
 *                           SUBROUTINE SITE
@@ -143,7 +143,7 @@
         VSecef(3) = 0.0D0
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE ANGLESLAPLACE
@@ -214,7 +214,7 @@
 *    Vallado       2001, 413-417
 *
 * ------------------------------------------------------------------------------  
-*
+*
       SUBROUTINE ANGLESLAPLACE ( Delta1,Delta2,Delta3,Alpha1,Alpha2,
      &                      Alpha3,JD1,JD2,JD3,RS1,RS2,RS3, r2,v2 )
         IMPLICIT NONE
@@ -284,7 +284,7 @@ c        TUDay        =     0.00933809017716D0
         magtemp = MAG(Temp)
         CALL CROSS( RS2,RS3, Temp1 )
         magtemp1 = MAG(Temp1)
-*
+*
 *      needs a different test xxxx!!  
         IF ( ( DABS(magtemp) .gt. Small ) .and.
      &     ( DABS( magtemp1) .gt. Small )  ) THEN
@@ -357,7 +357,7 @@ c        TUDay        =     0.00933809017716D0
 *         INC(i) 
 *     UNTIL ( DABS( OldR-magR ) .lt. Small ) .or. ( i .ge. 30 )
    
-*
+*
         IF ( DABS(D) .gt. 0.000001D0 ) THEN
             ! --------------- Solve eighth order poly -----------------
             L2DotRS= DOT( L2,RS2 ) 
@@ -421,7 +421,7 @@ c        TUDay        =     0.00933809017716D0
 
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE ANGLESGAUSS
@@ -487,7 +487,7 @@ c        TUDay        =     0.00933809017716D0
 *    Vallado       2001, 417-421, Alg 49, Ex 7-2 (425-427)
 *
 * ------------------------------------------------------------------------------  
-*
+*
       SUBROUTINE ANGLESGAUSS ( Delta1,Delta2,Delta3,Alpha1,Alpha2,
      &                      Alpha3,JD1,JD2,JD3,RS1,RS2,RS3, r2,v2 )
         IMPLICIT NONE
@@ -557,7 +557,7 @@ c        TUDay        =     0.00933809017716D0
         LMatI(3,3) = ( L1(1)*L2(2)-L1(2)*L2(1)) / D
 
         CALL MATMULT( LMatI,RSMat,3,3,3, 3,3,3,   LIR )
-*
+*
         ! ------------ Find f and g series at 1st and 3rd obs ---------
 *      speed by assuming circ sat vel for uDot here ??
 *      some similartities in 1/6t3t1 ...  
@@ -621,7 +621,7 @@ c        TUDay        =     0.00933809017716D0
         Rhoold2= -RhoMat(2,1)
         Rhoold3=  RhoMat(3,1)/c3
 
-*
+*
       ! -------- Loop through the refining process ------------  for WHILE () DO
       DO ll= 1 , 3
             Write( *,*) ' Iteration # ',ll
@@ -700,7 +700,7 @@ c        TUDay        =     0.00933809017716D0
           ENDDO
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE RV_RADEC
@@ -785,7 +785,7 @@ c        TUDay        =     0.00933809017716D0
           ENDIF
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE RV_TRADEC
@@ -827,7 +827,7 @@ c        TUDay        =     0.00933809017716D0
 *    Vallado       2001, 248-250, Alg 26
 *
 * ------------------------------------------------------------------------------  
-*
+*
       SUBROUTINE RV_TRADEC   ( Rijk,Vijk,RSecef, Direction, Rho,TRtAsc,
      &                         TDecl,DRho,DTRtAsc,DTDecl )
         IMPLICIT NONE
@@ -896,7 +896,7 @@ c        TUDay        =     0.00933809017716D0
           ENDIF
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE RV_RAZEL
@@ -990,7 +990,7 @@ c        TUDay        =     0.00933809017716D0
             CALL GCRF_ITRF ( reci,veci, 'FROM', rECEF,vECEF,
      &                      TTT, JDUT1, LOD, xp, yp, terms )
           ELSE
-*
+*
             ! ---------------- convert eci to ecef --------------------
             CALL GCRF_ITRF  ( reci,veci, 'TOO ', rECEF,vECEF,
      &                      TTT, JDUT1, LOD, xp, yp, terms )
@@ -1038,7 +1038,7 @@ c        TUDay        =     0.00933809017716D0
           ENDIF  ! If
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE RV_ELATLON
@@ -1140,7 +1140,7 @@ c        TUDay        =     0.00933809017716D0
 
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE RVSEZ_RAZEL
@@ -1603,7 +1603,7 @@ c        TUDay        =     0.00933809017716D0
         CALL ANGLE( R1,R2, Theta )
         CALL ANGLE( R2,R3, Theta1 )
         IF ( (Theta .gt. TolAngle) .or. (Theta1 .gt. TolAngle) ) THEN
-            Error= 'ANGLE > 1\F8'
+            Error= 'ANGLE > 1'
           ENDIF
 
         ! ----------- Perform Herrick-GIBBS method to find V2 ---------
@@ -1803,7 +1803,7 @@ c               write(20,'(4f14.6)') y,xold,dtnew,psinew
                   ENDDO
               ENDIF   ! If  the answer has converged
           ELSE
-            Error= 'impos 180\F8' 
+            Error= 'impos 180' 
           ENDIF  ! If  Var A .gt. 0.0D0
 
       RETURN
