@@ -402,10 +402,10 @@ c
      &                    SenAlt*1000.0,'m'
              Write( 20,'(3(A,F9.6),A)') ' Sensor Biases:  Rho ',
      &            BiasRng*1000,
-     &            ' m Az ',BiasAz*rad2deg,' ø El ',BiasEl*rad2deg,' ø'
+     &            ' m Az ',BiasAz*rad2deg,'  El ',BiasEl*rad2deg,' '
              Write( 20,'(3(A,F9.6),A)') ' Sensor Noises:  Rho ',
      &            NoiseRng*1000,' m Az ',
-     &            NoiseAz*rad2deg,' ø El ',NoiseEl*rad2Deg,' ø'
+     &            NoiseAz*rad2deg,'  El ',NoiseEl*rad2Deg,' '
            ENDIF
 
          ! -------------- Perform Initial Orbit Determination ---------
@@ -543,7 +543,7 @@ c               Write( 20,'(A,3(F14.7))')'R2',R2(1),R2(2),R2(3)
      &               R2(2)/rekm,R2(3)/rekm
                Write( 20,'(A,3(F14.7),3(F8.4),A)')' ',
      &               V2(1)/velkmps,V2(2)/velkmps,V2(3)/velkmps,
-     &                 Theta/Deg2Rad,theta1/Deg2Rad,coplangl/Deg2Rad,'ø'
+     &                 Theta/Deg2Rad,theta1/Deg2Rad,coplangl/Deg2Rad,''
 
                IF (NumObs .lt. 60) THEN ! Limit to 60 for an initial IOD guess
                    DO i = 1,3
@@ -650,18 +650,18 @@ cdav       READ(*,*) JDEpoch
            Write( 20,* )
            Write( 20,'(A,F14.5,A)') ' a      ',a,' km'
            Write( 20,'(A,F12.8,A)') ' e      ',ecc
-           Write( 20,'(A,F12.8,A)') ' i      ',inc/Deg2Rad,' ø'
-           Write( 20,'(A,F12.8,A)') ' ê      ',Omega/Deg2Rad,' ø'
-           Write( 20,'(A,F12.8,A)') ' w      ',Argp/Deg2Rad,' ø'
-           Write( 20,'(A,F12.8,A)') ' v      ',Nu/Deg2Rad,' ø'
-           Write( 20,'(A,F12.8,A)') ' M      ',M/Deg2Rad,' ø'
+           Write( 20,'(A,F12.8,A)') ' i      ',inc/Deg2Rad,' '
+           Write( 20,'(A,F12.8,A)') '       ',Omega/Deg2Rad,' '
+           Write( 20,'(A,F12.8,A)') ' w      ',Argp/Deg2Rad,' '
+           Write( 20,'(A,F12.8,A)') ' v      ',Nu/Deg2Rad,' '
+           Write( 20,'(A,F12.8,A)') ' M      ',M/Deg2Rad,' '
            Write( *,'(A,F14.5,A)') ' a      ',a,' km'
            Write( *,'(A,F12.8,A)') ' e      ',ecc
-           Write( *,'(A,F12.8,A)') ' i      ',inc/Deg2Rad,' ø'
-           Write( *,'(A,F12.8,A)') ' ê      ',Omega/Deg2Rad,' ø'
-           Write( *,'(A,F12.8,A)') ' w      ',Argp/Deg2Rad,' ø'
-           Write( *,'(A,F12.8,A)') ' v      ',Nu/Deg2Rad,' ø'
-           Write( *,'(A,F12.8,A)') ' M      ',M/Deg2Rad,' ø'
+           Write( *,'(A,F12.8,A)') ' i      ',inc/Deg2Rad,' '
+           Write( *,'(A,F12.8,A)') '       ',Omega/Deg2Rad,' '
+           Write( *,'(A,F12.8,A)') ' w      ',Argp/Deg2Rad,' '
+           Write( *,'(A,F12.8,A)') ' v      ',Nu/Deg2Rad,' '
+           Write( *,'(A,F12.8,A)') ' M      ',M/Deg2Rad,' '
          ENDIF  ! If TypeAns = 'I'
 
       RETURN

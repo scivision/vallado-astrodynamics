@@ -1603,7 +1603,7 @@ c        TUDay        =     0.00933809017716D0
         CALL ANGLE( R1,R2, Theta )
         CALL ANGLE( R2,R3, Theta1 )
         IF ( (Theta .gt. TolAngle) .or. (Theta1 .gt. TolAngle) ) THEN
-            Error= 'ANGLE > 1ø'
+            Error= 'ANGLE > 1'
           ENDIF
 
         ! ----------- Perform Herrick-GIBBS method to find V2 ---------
@@ -1803,7 +1803,7 @@ c               write(20,'(4f14.6)') y,xold,dtnew,psinew
                   ENDDO
               ENDIF   ! If  the answer has converged
           ELSE
-            Error= 'impos 180ø' 
+            Error= 'impos 180' 
           ENDIF  ! If  Var A .gt. 0.0D0
 
       RETURN

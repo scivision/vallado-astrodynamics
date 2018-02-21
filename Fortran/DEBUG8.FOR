@@ -60,15 +60,15 @@ c            WRITE(11,800)T,ro(1),ro(2),ro(3),vo(1),vo(2),vo(3)
 
                 Write(11,'(A,f15.9)')  ' Eccentricity         ',Ecco
                 Write(11,'(A,f10.4,A)')  ' Inclination          ',
-     &                   Inclo * Rad,'     ø'
+     &                   Inclo * Rad,'     '
                 Write(11,'(A,f10.4,A)')  ' Long of Asc Node     ',
-     &                   nodeo* Rad,'     ø'
+     &                   nodeo* Rad,'     '
                 Write(11,'(A,f10.4,A)')  ' Arg of Perigee       ',
-     &                   Argpo* Rad,'     ø'
+     &                   Argpo* Rad,'     '
                 Write(11,'(A,f10.4,A)')  ' Mean Anomaly         ',
-     &                   Mo  * Rad,'     ø'
+     &                   Mo  * Rad,'     '
                 Write(11,'(A,f14.8,A)')  ' True Anomaly         ',
-     &                   Nuo*Rad,' ø'
+     &                   Nuo*Rad,' '
                 Write(11,'(A,F14.8,A)')  ' Mean Motion          ',
      &                     No*XpDotp,' Rev/Day'
                 Write(11,'(A,F14.8,A)')  ' N Dot                ',
@@ -81,9 +81,9 @@ c            WRITE(11,800)T,ro(1),ro(2),ro(3),vo(1),vo(2),vo(3)
      &                   BC,'  kg/m2'
                 Write(11,*)
                 Write(11,'(A,F12.6,A)')  ' Long of Asc Node rate',
-     &                   nodeDot*Rad,'   ø/tu'
+     &                   nodeDot*Rad,'   /tu'
                 Write(11,'(A,F12.6,A)')  ' Arg of perigee rate  ',
-     &                   ArgpDot*Rad,'   ø/tu'
+     &                   ArgpDot*Rad,'   /tu'
                 Write(11,'(A)')  ' Eccentricity rate    '
                 Write(11,*)
               ENDIF

@@ -2,8 +2,8 @@
 KAENA_POINT                         
 
  Lat   21.572070 Lon  201.733260 Alt  300.459650m
- Sensor Biases:  Rho 80.000000 m Az  0.008100 ø El  0.004500 ø
- Sensor Noises:  Rho 92.500000 m Az  0.022400 ø El  0.013900 ø
+ Sensor Biases:  Rho 80.000000 m Az  0.008100  El  0.004500 
+ Sensor Noises:  Rho 92.500000 m Az  0.022400  El  0.013900 
 
  r and v from initial data 
 

@@ -852,7 +852,7 @@
 *
 *  Inputs          Description                    Range / Units
 *    JD          - Julian Date                    days from 4713 BC
-*    Latgd       - SITE latitude (SOUTH -)        -65ø to 65ø rad
+*    Latgd       - SITE latitude (SOUTH -)        -65 to 65 rad
 *    Lon         - SITE longitude (WEST -)        -2Pi to 2Pi rad
 *    WhichKind   - Character for which rise/set   'S' 'C' 'N' 'A'
 *
@@ -1017,7 +1017,7 @@
 *
 *  Inputs          Description                    Range / Units
 *    JD          - Julian Date                    days from 4713 BC
-*    Latgd       - SITE latitude (SOUTH -)        -65ø to 65ø rad
+*    Latgd       - SITE latitude (SOUTH -)        -65 to 65 rad
 *    Lon         - SITE longitude (WEST -)        -2Pi to 2Pi rad
 *
 *  OutPuts       :

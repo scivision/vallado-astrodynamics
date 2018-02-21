@@ -221,7 +221,7 @@
 *
 *  This subroutine solves Keplers equation when the true anomaly is known.
 *    The Mean and Eccentric, parabolic, or hyperbolic anomaly is also found.
-*    The parabolic limit at 168ø is arbitrary. The hyperbolic anomaly is also
+*    The parabolic limit at 168 is arbitrary. The hyperbolic anomaly is also
 *    limited. The hyperbolic sine is used because it's not double valued.
 *
 *  Author        : David Vallado                  719-573-2600    1 Mar 2001

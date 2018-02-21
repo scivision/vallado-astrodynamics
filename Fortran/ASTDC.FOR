@@ -1413,12 +1413,12 @@ c            Write(20,'(A,6f12.6)')  'r v sigmas ',dsqrt(Pbest(1,1)),
 *                XPred(i+3,1)= VNew(i)
 *              ENDDO
 *
-*            CALL MATMULT   ( Phi,DXBest,6,6,1, DXPred )  ! DX = ÌDX
+*            CALL MATMULT   ( Phi,DXBest,6,6,1, DXPred )  ! DX = DX
 *
 *            CALL MATTRANS  ( Phi       ,6,6  , Phit   )
 *            CALL MATMULT   ( PBest,Phit,6,6,6, PPt    )
 *            CALL MATMULT   ( Phi,PPt   ,6,6,6, PPPt   )
-*            CALL MATADD    ( PPPt,Q    ,6,6,   PPred  )  ! P = ÌPÌt + Q
+*            CALL MATADD    ( PPPt,Q    ,6,6,   PPred  )  ! P = Pt + Q
 *
 *            CALL FindH( XOld,Rec,ObsRecFile,PercentChg,Dtsec,SenPtr,  LST,H )
 **    xpred .or. rnom(xold)??
@@ -1612,7 +1612,7 @@ c            Write(20,'(A,6f12.6)')  'r v sigmas ',dsqrt(Pbest(1,1)),
 *            CALL MATTRANS  ( Phi       ,6,6  , Phit   )
 *            CALL MATMULT   ( PBest,Phit,6,6,6, PPt    )
 *            CALL MATMULT   ( Phi,PPt   ,6,6,6, PPPt   )
-*            CALL MATADD    ( PPPt,Q    ,6,6,   PPred  )  ! P = ÌPÌt + Q
+*            CALL MATADD    ( PPPt,Q    ,6,6,   PPred  )  ! P = Pt + Q
 *
 *            CALL FindH( XOld,Rec,ObsRecFile,PercentChg,Dtsec,SenPtr,  LST,H )
 **    xpred .or. rnom(xold)??

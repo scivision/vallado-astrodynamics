@@ -1407,7 +1407,7 @@ c          ENDIF
 *
 *  this subroutine solves Keplers equation when the true anomaly is known.
 *    The Mean and Eccentric, parabolic, or hyperbolic anomaly is also found.
-*    The parabolic limit at 168ø is arbitrary. The hyperbolic anomaly is also
+*    The parabolic limit at 168 is arbitrary. The hyperbolic anomaly is also
 *    limited. The hyperbolic sine is used because it's not double valued.
 *
 *  Author        : David Vallado                  719-573-2600    1 Mar 2001
@@ -1417,8 +1417,8 @@ c          ENDIF
 *    Nu          - True Anomaly                   -2Pi to 2Pi rad
 *
 *  Outputs       :
-*    E0          - Eccentric Anomaly              0.0D0 to 2Pi rad       153.02D0ø
-*    M           - Mean Anomaly                   0.0D0 to 2Pi rad       151.7425D0ø
+*    E0          - Eccentric Anomaly              0.0D0 to 2Pi rad       153.02D0
+*    M           - Mean Anomaly                   0.0D0 to 2Pi rad       151.7425D0
 *
 *  Locals        :
 *    E1          - Eccentric Anomaly, next value  rad
