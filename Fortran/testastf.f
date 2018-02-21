@@ -1,10 +1,5 @@
-*
-*      -----------------------------------------------------------------
-*
-*                              TESTASTF.FOR
-*
-*   This file contains sample subroutines to test each of the functions
-*   in the astrodynamic libraries.
+!   This file contains sample subroutines to test each of the functions
+!   in the astrodynamic libraries.
 *
 *                          Companion code for
 *             Fundamentals of Astrodynamics and Applications
@@ -28,37 +23,31 @@
 *
 *     *****************************************************************
 *
-*     Uses all ast, etc object files
-*
+!     Uses all ast, etc object files
+
       PROGRAM TESTASTF
+        use, intrinsic:: ieee_arithmetic
+        use comm
+        use astmath
+        use astreduc
         IMPLICIT NONE
+        
         INTEGER i, NumChose
-        CHARACTER*12 IFileName
+        CHARACTER(*), parameter :: IFileName = 'testastf.dat'
         CHARACTER*4 Blank4
         CHARACTER*15 Title
+        
+  
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astreduc.cmn'
-        INCLUDE 'astconst.cmn'
+        
 
-c        Write(*,*) 'Input Filename '
-c        Read(*,*) IFileName
-        IFileName = 'testastf.dat'
-        OPEN( 10,FILE=IFileName,ACCESS='SEQUENTIAL',STATUS='OLD' )
-        OPEN( 20,FILE='testastf.out',ACCESS='SEQUENTIAL',
+        
+
+        OPEN(10,FILE=IFileName,ACCESS='SEQUENTIAL',STATUS='OLD' )
+        OPEN(20,FILE='testastf.out',ACCESS='SEQUENTIAL',
      &        STATUS='UNKNOWN' )
 
-        i = 1
-        DO WHILE (i .ge. 0)
-            ! -------------------- Tests for Math ----------------------
-            Read( 10,'(I4,4X,A15)', END=999 ) NumChose,Title
-            IF (NumChose .eq. 0 ) THEN
-                Read(10,'(I4,4X,A15)',END=999 ) NumChose,Title
-              ENDIF
-            Write(*,*) ' ------ xx',Title,' Test Case --'
-            Write(20,*) '-- Test Case --','------ xx',NumChose,Title,
-     &                           '-----------------------'
-
+       
             IF (NumChose .eq. 2 ) THEN
                 CALL TestGETPART
               ENDIF
@@ -68,42 +57,21 @@ c        Read(*,*) IFileName
             IF (NumChose .eq. 4 ) THEN
                 CALL TestGetPartR
               ENDIF
-            IF (NumChose .eq. 5 ) THEN
+  
                 CALL TestFACTORIAL
-              ENDIF
+
             IF (NumChose .eq. 6 ) THEN
                 CALL TestBINOMIAL
               ENDIF
-            IF (NumChose .eq. 7 ) THEN
-                CALL TestMIN
-              ENDIF
-            IF (NumChose .eq. 8 ) THEN
-                CALL TestMAX
-              ENDIF
+
             IF (NumChose .eq. 9 ) THEN
                 CALL TestPLANE
               ENDIF
-            IF (NumChose .eq. 10 ) THEN
-                CALL TestARCCOSH
-              ENDIF
-            IF (NumChose .eq. 11 ) THEN
-                CALL TestSINH
-              ENDIF
-            IF (NumChose .eq. 12 ) THEN
-                CALL TestARCSINH
-              ENDIF
-            IF (NumChose .eq. 13 ) THEN
-                CALL TestARCTANH
-              ENDIF
-            IF (NumChose .eq. 14 ) THEN
-                CALL TestDOT
-              ENDIF
+
             IF (NumChose .eq. 15 ) THEN
                 CALL TestCROSS
               ENDIF
-            IF (NumChose .eq. 16 ) THEN
-                CALL TestMAG
-              ENDIF
+
             IF (NumChose .eq. 17 ) THEN
                 CALL TestNORM
               ENDIF
@@ -116,21 +84,7 @@ c        Read(*,*) IFileName
             IF (NumChose .eq. 20 ) THEN
                 CALL TestROT3
               ENDIF
-            IF (NumChose .eq. 21 ) THEN
-                CALL TestADDVEC
-              ENDIF
-            IF (NumChose .eq. 22 ) THEN
-                CALL TestADD3VEC
-              ENDIF
-            IF (NumChose .eq. 23 ) THEN
-                CALL TestLNCOM1
-              ENDIF
-            IF (NumChose .eq. 24 ) THEN
-                CALL TestLNCOM2
-              ENDIF
-            IF (NumChose .eq. 25 ) THEN
-                CALL TestLNCOM3
-              ENDIF
+
             IF (NumChose .eq. 26 ) THEN
                 CALL TestPOLYFIT
               ENDIF
@@ -149,18 +103,7 @@ c        Read(*,*) IFileName
             IF (NumChose .eq. 32 ) THEN
                 CALL TestQUARTIC
               ENDIF
-            IF (NumChose .eq. 33 ) THEN
-                CALL TestMATSCALE
-              ENDIF
-            IF (NumChose .eq. 34 ) THEN
-                CALL TestMATMULT
-              ENDIF
-            IF (NumChose .eq. 35 ) THEN
-                CALL TestMATADD
-              ENDIF
-            IF (NumChose .eq. 36 ) THEN
-                CALL TestMATSUB
-              ENDIF
+
             IF (NumChose .eq. 37 ) THEN
                 CALL TestMATTRANS
               ENDIF
@@ -470,15 +413,7 @@ c        Read(*,*) IFileName
               ENDIF
 
 
-           ENDDO
-
-  999   CONTINUE
-
-        CLOSE( 10 )
-        CLOSE( 20 )
-      STOP
-      END
-*
+      contains
 * ------------------------------------------------------------------------
 *
 *                       Individual SUBROUTINES
@@ -549,10 +484,9 @@ c        Read(*,*) IFileName
       END
 
       SUBROUTINE TestFACTORIAL
-        IMPLICIT NONE
-        EXTERNAL Factorial
+
         INTEGER x
-        REAL*8 Factorial, Fact
+        REAL*8 Fact
 
         Read(10,*) x
 
@@ -565,10 +499,9 @@ c        Read(*,*) IFileName
       END
 
       SUBROUTINE TestBINOMIAL
-        IMPLICIT NONE
-        EXTERNAL Binomial
+
         INTEGER i,j
-        REAL*8 Binomial, Bio
+        REAL(wp) :: Bio
 
         Read(10,*) i,j
         Write(20,*)  i,j
@@ -578,42 +511,14 @@ c        Read(*,*) IFileName
         Write(20,*) '  Results:'
         Write(20,*) Bio
 
-      RETURN
+
       END
 
-      SUBROUTINE TestMIN
-        IMPLICIT NONE
-        EXTERNAL Min
-        REAL*8 Min, Mn, x, y
 
-        Read(10,*) x,y
-        Write(20,*)  x,y
-
-        Mn = MIN      ( X, Y )
-
-        Write(20,*) '  Results:'
-        Write(20,*) Mn
-
-      RETURN
-      END
-
-      SUBROUTINE TestMAX
-        IMPLICIT NONE
-        EXTERNAL Max
-        REAL*8 Max, Mx, x, y
-
-        Read(10,*) x,y
-        Write(20,*)  x,y
-
-        Mx = MAX      ( X, Y )
-
-        Write(20,*) '  Results:'
-        Write(20,*) Mx
-
-      RETURN
-      END
 
       SUBROUTINE TestPLANE
+      
+        real(wp) :: x1,x2,x3,y1,y2,y3,z1,z2,z3,a,b,c,d
 
         Read(10,*) x1,y1,z1
         Write(20,*)  x1,y1,z1
@@ -729,20 +634,6 @@ c        Read(*,*) IFileName
       RETURN
       END
 
-      SUBROUTINE TestMAG
-        IMPLICIT NONE
-        REAL*8 Vec(3), magr,MAG
-        EXTERNAL MAG
-
-        Read(10,*) Vec(1),Vec(2),Vec(3)
-        Write(20,*)  Vec(1),Vec(2),Vec(3)
-
-        magr =  MAG ( Vec )
-        Write(20,*) '  Results:'
-        Write(20,*) magr
-
-      RETURN
-      END
 
       SUBROUTINE TestNORM
         IMPLICIT NONE
@@ -1410,8 +1301,6 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 Lon, JD, LST, GST
 
-        INCLUDE 'astmath.cmn'
-
         Read(10,*) Lon,JD
         Write(20,*)  Lon,JD
         Lon = Lon * deg2Rad
@@ -1429,7 +1318,6 @@ c        Read(*,*) IFileName
         REAL*8 JD, Latgd, Lon, UTSunRise, UTSunSet
         CHARACTER WhichKind
         CHARACTER*12 Error
-        INCLUDE 'astmath.cmn'
 
         Read(10,*) JD, Latgd, Lon, Whichkind
         Write(20,*)  JD, Latgd, Lon,  WhichKind
@@ -1449,7 +1337,7 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 JD, Latgd, Lon, UTMoonRise, UTMoonSet, MoonPhaseAng
         CHARACTER*12 Error
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) JD, Latgd, Lon
         Write(20,*)  JD, Latgd, Lon
@@ -1521,7 +1409,7 @@ c        Read(*,*) IFileName
         INTEGER Deg, Min
         REAL*8  Sec, DMS
         CHARACTER*4 Direction
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Deg, Min, Sec,  Direction
         Write(20,*)  Deg, Min, Sec,  Direction
@@ -1554,7 +1442,7 @@ c        Read(*,*) IFileName
         REAL*8 DUT1, DAT, UT1, TUT1, UTC, TAI, TT,
      &  Sec, JDTT, TDB, TTDB, JDTDB,DDpsi,DDeps
 
-        INCLUDE 'astmath.cmn'
+        
 
         rad = rad2deg
 
@@ -1638,8 +1526,8 @@ c        Read(*,*) IFileName
         REAL*8 R(3),V(3),P,a,Ecc,Incl,Omega,Argp,Nu,ArgLat,TrueLon,
      &         LonPer
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         Read(10,*) p,a,ecc,incl,Omega,Argp,Nu,ArgLat,TrueLon,LonPer
         Write(20,*) p,a,ecc,incl,Omega,Argp,Nu,ArgLat,TrueLon,
@@ -1680,7 +1568,7 @@ c        Read(*,*) IFileName
       SUBROUTINE TestNEWTONE
         IMPLICIT NONE
         REAL*8 Ecc, E0, M, Nu
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Ecc, E0
         Write(20,*)  Ecc, E0
@@ -1698,7 +1586,7 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 Ecc, M, E0, Nu
 
-        INCLUDE 'astmath.cmn'
+        
         Read(10,*) Ecc, M
         Write(20,*)  Ecc, M
         M = M *deg2rad
@@ -1715,7 +1603,7 @@ c        Read(*,*) IFileName
       SUBROUTINE TestNEWTONNU
         IMPLICIT NONE
         REAL*8 Ecc, Nu, E0, M
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Ecc, Nu
         Write(20,*)  Ecc, Nu
@@ -1736,7 +1624,7 @@ c        Read(*,*) IFileName
         CHARACTER*12 Error
         REAL*8 vkmpersec
 
-        INCLUDE 'astconst.cmn'
+        
 
         VKmPerSec = 7.905366149846D0
 
@@ -1767,7 +1655,7 @@ c        Read(*,*) IFileName
         REAL*8 Ro(3), R(3), p, Tof
         INTEGER i
 
-        INCLUDE 'astconst.cmn'
+        
 
         Read(10,*) Ro(1),Ro(2),Ro(3)
         Read(10,*) R(1),R(2),R(3), p
@@ -1794,8 +1682,8 @@ c        Read(*,*) IFileName
         REAL*8 R(3), JD, Latgc,Latgd,Lon,Hellp
         INTEGER i
         EXTERNAL GSTIME
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         Read(10,*) r(1),r(2),r(3)
         Read(10,*) JD
@@ -1818,7 +1706,7 @@ c        Read(*,*) IFileName
         REAL*8 Latgc,Latgd
         CHARACTER*4 Direction
 
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Latgc, Direction
         Write(20,*)  Latgc, Direction
@@ -1839,7 +1727,7 @@ c        Read(*,*) IFileName
         CHARACTER WhichKind
         CHARACTER*3 LOS
 
-        INCLUDE 'astconst.cmn'
+        
 
         Read(10,*) r1(1),r1(2),r1(3)
         Read(10,*) r2(1),r2(2),r2(3),  WhichKind
@@ -1898,7 +1786,7 @@ c        Read(*,*) IFileName
         CHARACTER  WhichKind, Lit(3)
         INTEGER i
 
-        INCLUDE 'astconst.cmn'
+        
 
         Read(10,*) r(1),r(2),r(3)
         Read(10,*) JD,  WhichKind
@@ -1923,7 +1811,7 @@ c        Read(*,*) IFileName
         INTEGER i
         CHARACTER HitEarth
 
-        INCLUDE 'astconst.cmn'
+        
 
         Read(10,*) Rint(1)
         Read(10,*) Rtgt(1)
@@ -1947,7 +1835,7 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 Incl, Az, SLatgd, SLon, SAlt, tFOV, EtaCtr, FovMAx,
      &     TotalRng, RhoMax, RhoMin,TgtLat, TgtLon
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Incl,Az,SLatgd,SLon,SAlt,tFOV,EtaCtr,FOVMax
         Write(20,*)  Incl,Az,SLatgd,SLon,SAlt,tFOV,EtaCtr,FOVMax
@@ -1969,7 +1857,7 @@ c        Read(*,*) IFileName
       SUBROUTINE TestRNGAZ
         IMPLICIT NONE
         REAL*8 LLat, LLon, TLat, TLon, Tof, Range, Az
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) LLat,LLon,TLat,TLon
         Write(20,*)  LLat,LLon,TLat,TLon
@@ -1991,7 +1879,7 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 LLat, LLon, Range, Az, TLat, TLon
 
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) LLat,LLon,Range,Az
         Write(20,*)  LLat,LLon,Range,Az
@@ -2011,7 +1899,7 @@ c        Read(*,*) IFileName
       SUBROUTINE TestSITE
         IMPLICIT NONE
         REAL*8 LatGd,Alt,Lon,RS(3),VS(3), ReFt
-        INCLUDE 'astmath.cmn'
+        
 
         Reft = 20925644.0288713D0
 
@@ -2087,8 +1975,8 @@ c        Read(*,*) IFileName
         CHARACTER*4 Direction
         INTEGER i
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         VKmPerSec = 7.905366149846D0
 
@@ -2118,8 +2006,8 @@ c        Read(*,*) IFileName
      &         DTDecl,rekm,vkmpersec
         CHARACTER*4 Direction
         INTEGER i
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         VKmPerSec = 7.905366149846D0
 
@@ -2151,12 +2039,12 @@ c        Read(*,*) IFileName
         REAL*8 Reci(3),Veci(3),Latgd,Lon,alt,Rho,Az,El,DRho,DAz,DEl
         INTEGER terms
         CHARACTER*4 Direction
-        INTEGER Year, Mon, Day, Hr, MIN,terms
+        INTEGER Year, Mon, Day, Hr, MIN
         CHARACTER*12  Error
         REAL*8 DUT1, DAT, UT1, TUT1, UTC, TAI, TT,lod,xp,yp,
      &  Sec, JDTT, TDB, TTDB, JDTDB,DDpsi,DDeps,jdut1,ttt
 
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Reci(1),Reci(2),Reci(3)
         Write(20,*) Reci(1),Reci(2),Reci(3)
@@ -2202,8 +2090,8 @@ c        Read(*,*) IFileName
      &         rekm,VKmPerSec
         CHARACTER*4 Direction
         INTEGER i
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         VKmPerSec = 7.905366149846D0
 
@@ -2238,7 +2126,7 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         CHARACTER*4 Direction
         REAL*8 RhoSez(3), DRhoSez(3),Rho,Az,El,DRho,DAz, DEl
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Rhosez(1),Rhosez(2),Rhosez(3)
         Write(20,*)  Rhosez(1),Rhosez(2),Rhosez(3)
@@ -2266,7 +2154,7 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 RtAsc,Decl,EclLat,EclLon
         CHARACTER*4 Direction
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) RtAsc,Decl,Direction
         Write(20,*)  RtAsc,Decl,Direction
@@ -2291,7 +2179,7 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 RtAsc,Decl,LST,Latgc,Az,El
         CHARACTER*4 Direction
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) RtAsc,Decl,LST,LatGc,Direction
         Write(20,*)  RtAsc,Decl,LST,LatGc,Direction
@@ -2308,8 +2196,8 @@ c        Read(*,*) IFileName
         IMPLICIT NONE
         REAL*8 R1(3), R2(3), R3(3), V2(3), Theta, Theta1, Copa
         CHARACTER*12 Error
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         Read(10,*) R1(1),R1(2),R1(3)
         Read(10,*) R2(1),R2(2),R2(3)
@@ -2338,8 +2226,8 @@ c        Read(*,*) IFileName
         REAL*8 R1(3), R2(3), R3(3), JD1, JD2, JD3, V2(3), Theta,
      &         Theta1, Copa,t1,t2,t3
         CHARACTER*12 Error
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         Read(10,*) R1(1),R1(2),R1(3),t1
         JD1 = 2448608.0D0 + t1/86400.0D0
@@ -2374,7 +2262,7 @@ c        Read(*,*) IFileName
         CHARACTER Dm, OverRev
         CHARACTER*12 Error
 
-        INCLUDE 'astconst.cmn'
+        
 
         Read(10,*) Ro(1),Ro(2),Ro(3)
         Read(10,*) R(1),R(2),R(3)
@@ -2407,7 +2295,7 @@ c        Read(*,*) IFileName
         CHARACTER Dm, OverRev
         CHARACTER*12 Error
 
-        INCLUDE 'astconst.cmn'
+        
 
         Read(10,*) Ro(1),Ro(2),Ro(3)
         Read(10,*) R(1),R(2),R(3)
@@ -2464,7 +2352,7 @@ c       REAL*8  RAr96(4,263)
 c       INTEGER pIAr96(10,112)
 c       REAL*8  pRAr96(4,112)
 
-        INCLUDE 'astreduc.cmn'
+        
 
         Read(10,*) FileN1
 c        Read(10,*) FileN2
@@ -2530,7 +2418,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         REAL*8 TTT,Nut(3,3), Meaneps
         Character*64 title
 
-        INCLUDE 'astmath.cmn'
+        
 
         Title = 'nutation'
         Read(10,*) TTT
@@ -2550,7 +2438,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         REAL*8 JDUT1, DeltaPsi,TrueEps,Omega,LOD,nut(3,3),meaneps,
      &          st(3,3),stdot(3,3),omegaearth(3)
         Character*64 title
-        INCLUDE 'astmath.cmn'
+        
 
         Title = 'sidereal'
         Read(10,*) JDUT1,DeltaPsi, MeanEps,Omega,LOD,terms
@@ -2571,7 +2459,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         REAL*8 xp, yp, pm(3,3)
         Character*64 title
 
-        INCLUDE 'astmath.cmn'
+        
 
         title = 'polar motion'
         Read(10,*) xp,yp
@@ -2630,9 +2518,9 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         REAL*8 rECEF(3), vECEF(3), xp, yp
         REAL*8 rTOD(3), vTOD(3),  JDUT1
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
-        INCLUDE 'astreduc.cmn'
+        
+        
+        
 
         Read(10,*) rJ2000(1),rJ2000(2),rJ2000(3)
         Read(10,*) vJ2000(1),vJ2000(2),vJ2000(3),TTDB,Direction
@@ -2703,7 +2591,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         IMPLICIT NONE
         REAL*8 RInit,RFinal,eInit,eFinal,NuInit,NuFinal,
      &          Deltava,Deltavb,dtsec
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) RInit,RFinal,eInit,eFinal,NuInit,NuFinal
         Write(20,*) RInit,RFinal,eInit,eFinal,NuInit,NuFinal
@@ -2723,7 +2611,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         IMPLICIT NONE
         REAL*8 RInit,Rb,RFinal,eInit,eFinal,NuInit,NuFinal,
      &         Deltava,Deltavb,DeltaVc,dtsec
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) RInit,Rb,RFinal,eInit,eFinal,NuInit,NuFinal
         Write(20,*) RInit,Rb,RFinal,eInit,eFinal,NuInit,NuFinal
@@ -2744,7 +2632,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         IMPLICIT NONE
         REAL*8 RInit,RFinal,eInit,eFinal,NuInit,NuTran,
      &         Deltava,Deltavb,dtsec
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) RInit,RFinal,eInit,eFinal,NuInit,NuTran
         Write(20,*) RInit,RFinal,eInit,eFinal,NuInit,NuTran
@@ -2762,7 +2650,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
       SUBROUTINE TestIOnlyChg
         IMPLICIT NONE
         REAL*8 Deltai,VInit,fpa, DeltaViOnly
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Deltai,VInit,fpa
         Write(20,*) Deltai,VInit,fpa
@@ -2780,7 +2668,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
       SUBROUTINE TestNodeOnlyChg
         IMPLICIT NONE
         REAL*8 iInit,ecc,DeltaOmega,VInit,fpa,incl,iFinal,DeltaV
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) iInit,ecc,DeltaOmega,VInit,fpa
         Write(20,*) iInit,ecc,DeltaOmega,VInit,fpa
@@ -2800,7 +2688,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
       SUBROUTINE TestIandNodeChg
         IMPLICIT NONE
         REAL*8 iInit,DeltaOmega,Deltai,VInit,fpa, DeltaV,iFinal
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) iInit,DeltaOmega,Deltai,VInit,fpa
         Write(20,*) iInit,DeltaOmega,Deltai,VInit,fpa
@@ -2821,7 +2709,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         IMPLICIT NONE
         REAL*8 RInit,RFinal,eInit,eFinal,NuInit,NuFinal,iInit,iFinal,
      &         Deltai,Deltai1,DeltaVa,DeltaVb,dtsec
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) RInit,RFinal,eInit,eFinal,NuInit,NuFinal,Iinit,
      &             Ifinal
@@ -2846,7 +2734,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         IMPLICIT NONE
         REAL*8 RInit,RFinal,eInit,e2,eFinal,NuInit,Nu2a,Nu2b,
      &         NuFinal,Deltai, Deltava,Deltavb,dtsec
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) RInit,RFinal,eInit,e2,eFinal,NuInit,Nu2a,Nu2b,
      &         NuFinal,Deltai
@@ -2873,7 +2761,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         REAL*8 Rcs1,Rcs3,PhaseI,eInit,eFinal,NuInit,NuFinal,
      &         PhaseF,WaitTime,DeltaV
         INTEGER kTgt,kInt
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Rcs1,Rcs3,PhaseI,eInit,eFinal,NuInit,NuFinal
         Write(20,*) Rcs1,Rcs3,PhaseI,eInit,eFinal,NuInit,NuFinal
@@ -2896,7 +2784,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         REAL*8 PhaseNew,Deltai,Delta2Node,LonTrue,RInt,RTgt,
      &         TTrans,TPhase,DVPhase, DVTrans1, DVTrans2
         INTEGER kTgt, kInt
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) PhaseNew,Deltai,Delta2Node,LonTrue,RInt,RTgt
         Write(20,*) PhaseNew,Deltai,Delta2Node,LonTrue,RInt,RTgt
@@ -2974,7 +2862,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
 
       SUBROUTINE TestIJK_RSW
         IMPLICIT NONE
-        REAL*8 Rijk(3),Vijk(3),R(3),S(3),W(3),Rrsw(3),Vrsw(3)
+        REAL(wp), dimension(4) :: Rijk,Vijk,R,S,W,Rrsw,Vrsw
         Character*4 Direction
 
         Read(10,*) Rijk(4),Vijk(4),R(4),S(4),W(4),Direction
@@ -3049,7 +2937,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
       SUBROUTINE TESTJ2DragPert
         IMPLICIT NONE
         REAL*8 Incl,Ecc,N,NDot, OmegaDOT,ArgpDOT,EDOT
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Incl,Ecc,N,NDot
         Write(20,*) Incl,Ecc,N,NDot
@@ -3069,7 +2957,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
      &         tdecl
         CHARACTER WhichKind
         CHARACTER*11 Vis
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) JD, Latgd, LST,  WhichKind
         Write(20,*) JD, Latgd, LST, WhichKind
@@ -3118,7 +3006,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         REAL*8 Latgc, LArr(0:70,0:70)
         INTEGER Order
         INTEGER i,j
-        INCLUDE 'astmath.cmn'
+        
 
         Read(10,*) Latgc,Order
         Write(20,*) Latgc,Order
@@ -3268,7 +3156,7 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
       END
 
       SUBROUTINE TESTCowell
-        IMPLICIT NONE
+
         REAL*8 R(3),V(3),ITime,FTime,DtDay,BC,R1(3),V1(3)
         CHARACTER*10 DerivType
 
@@ -3285,12 +3173,11 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
         Write(20,*) r1(1), r1(2), r1(3)
         Write(20,*) v1(1), v1(2), v1(3)
 
-      RETURN
       END
 
       SUBROUTINE TESTATMOS
-        IMPLICIT NONE
-        Real*8 R(3),Rho
+
+        Real(wp) :: R(3),Rho
 
         Read(10,*) r(1), r(2), r(3)
         Write(20,*) r(1), r(2), r(3)
@@ -3396,10 +3283,4 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
 *      RETURN
 *      END   ! SUBROUTINE TESTSequential
 
-
-
-* MS Fort
-*$INCLUDE: 'Common.For'
-* Lahey
-*        INCLUDE COMMON.FOR
-c
+      end program

@@ -1,7 +1,8 @@
-*   -------------------------------------------------------------------
-*
-*                              AST2BODY.FOR
-*
+      module ast2body
+      use comm
+      use astmath
+      use asttime
+      implicit none
 *   this file contains fundamental astrodynamic procedures and functions
 *   using 2-body dynamics. the routines span a wide range of material, and
 *   they come from chapters 2, 3, 5, and 11.
@@ -34,87 +35,18 @@
 *         Astconst.cmn
 *         Astreduc.cmn
 
-*
-*
-*      SUBROUTINE rv2coe      ( R, V, P, A, Ecc, Incl, Omega, Argp, Nu,
-*     &                         M, ArgLat, TrueLon, LonPer )
-*
-*      SUBROUTINE coe2rv      ( P, Ecc, Incl, Omega, Argp, Nu, ArgLat,
-*     &                         TrueLon, LonPer, R, V )
-*
-*      SUBROUTINE flt2rv      ( rmag, vmag, latgc, lon, fpa, az,
-*     &                         ttt, jdut1, lod, xp, yp, terms, r, v )
-*
-*      SUBROUTINE rv2flt      ( R, V, ttt, jdut1, lod, xp, yp, terms,
-*     &                         rmag, vmag, latgc, lon, fpa, az)
-*
-*      SUBROUTINE eq2rv       ( af, ag, meanlon, n, chi, psi, r, v)
-*
-*      SUBROUTINE rv2eq       ( R, V, af, ag, meanlon, n, chi, psi)
-*
-*      SUBROUTINE adbar2rv    ( rmag, vmag, rtasc, decl, fpav, az, r, v )
-*
-*      SUBROUTINE rv2adbar    ( R, V, rmag, vmag, rtasc, decl, fpav, az)
-*
-*      SUBROUTINE rv2rsw      ( R, V, rrsw, vrsw, transmat )
-*
-*      SUBROUTINE rv2ntw      ( R, V, rntw, vntw, transmat )
-*
-*      SUBROUTINE FINDC2C3    ( ZNew, C2New, C3New )
-*
-*      SUBROUTINE NEWTONE     ( Ecc, E0, M, Nu )
-*
-*      SUBROUTINE NEWTONM     ( Ecc, M, E0, Nu )
-*
-*      SUBROUTINE NEWTONNU    ( Ecc, Nu, E0, M )
-*
-*      SUBROUTINE KEPLER      ( Ro, Vo, dtsec, R, V, Error )
-*
-*      SUBROUTINE FINDTOF     ( Ro, R, p, Tof )
-*
-*      SUBROUTINE ijk2llA     ( R, JD, Latgc, Latgd, Lon, Hellp )
-*
-*      SUBROUTINE ijk2llE     ( R, JD, Latgc, Latgd, Lon, Hellp )
-*
-*      SUBROUTINE ijk2llB     ( R, JD, Latgc, Latgd, Lon, Hellp )
-*
-*      SUBROUTINE gc2gd       ( Latgc, Direction, Latgd )
-*
-*      SUBROUTINE SIGHT       ( R1, R2, WhichKind, LOS )
-*
-*      SUBROUTINE SUN         ( JD, RSun, RtAsc, Decl )
-*
-*      SUBROUTINE SunIll      ( JD, Lat, Lon, SunIll, SunAz, SunEl )
-*
-*      SUBROUTINE MOON        ( JD, RMoon, RtAsc, Decl )
-*
-*      SUBROUTINE MoonIll     ( MoonEl, f, MoonIll )
-*
-*      SUBROUTINE LIGHT       ( R, JD, WhichKind, LIT )
-*
-*      SUBROUTINE CHECKHITEARTH ( Rint, V1t, Rtgt, V2t, HitEarth )
-*
-*      SUBROUTINE SATFOV      ( Incl, Az, SLatgd, SLon, SAlt, tFOV, EtaCtr,
-*     &                         FovMax, TotalRng, RhoMax, RhoMin, TgtLat,
-*
-*      SUBROUTINE RNGAZ       ( LLat, LLon, TLat, TLon, Tof, Range, Az )
-*
-*      SUBROUTINE PATH        ( LLat, LLon, Range, Az, TLat, TLon )
-*
-*
-*
 
-*         Sinv= ( Ecc * DSIN(Nu) ) / DSQRT( 1.0D0+ 2.0D0*Ecc*DCOS(Nu) + Ecc*Ecc )
-*            he= 1.0D0+ 2.0D0*Ecc*DCOS(Nu) + Ecc*Ecc
+*         Sinv= ( Ecc * sin(Nu) ) / sqrt( 1.0D0+ 2.0D0*Ecc*cos(Nu) + Ecc*Ecc )
+*            he= 1.0D0+ 2.0D0*Ecc*cos(Nu) + Ecc*Ecc
 *            IF ( He .gt. 0.000001D0 ) THEN
-*                Cosv= ( 1.0D0 + Ecc * DCOS(Nu) ) / DSQRT(he)
+*                Cosv= ( 1.0D0 + Ecc * cos(Nu) ) / sqrt(he)
 *              ELSE
 *                Cosv= 0.0D0   ! Fix for special case (from testgau)
 *
 *            fpa= DACOS( Cosv )
 *             ANGLE( r,v  fpa )
 
-*
+      contains
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE rv2coe
@@ -172,38 +104,35 @@
         IMPLICIT NONE
         REAL*8 R(3), V(3), P, A, Ecc, Incl, Omega, Argp, Nu, M, ArgLat,
      &         TrueLon, LonPer
-        EXTERNAL DOT, MAG
+
 * -----------------------------  Locals  ------------------------------
         REAL*8 c1, RDotV, hk, SME, Hbar(3), Ebar(3), Nbar(3),
-     &         Dot, E, Temp, MAG, maghbar, magnbar, magr, magv
+     &         E, Temp,  maghbar, magnbar, magr, magv
         INTEGER i
         CHARACTER*2 TypeOrbit
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
-
         ! --------------------  Implementation   ----------------------
-        magr = MAG( R )
-        magv = MAG( V )
+        magr = norm2( R )
+        magv = norm2( V )
         ! ------------------  Find H N and E vectors   ----------------
         CALL CROSS( R, V, HBar )
-        maghbar = MAG(Hbar)
+        maghbar = norm2(Hbar)
         IF ( maghbar .gt. Small ) THEN
             NBar(1)= -HBar(2)
             NBar(2)=  HBar(1)
             NBar(3)=   0.0D0
-            magnbar = MAG( Nbar )
+            magnbar = norm2( Nbar )
             c1 = magv**2 - mu/magr
-            RDotV= DOT( R, V )
+            RDotV= dot_product( R, V )
             DO i= 1 , 3
                 EBar(i)= (c1*R(i) - RDotV*V(i))/mu
               ENDDO
 
-            Ecc = MAG( EBar )
+            Ecc = norm2( EBar )
 
             ! ------------  Find a e and semi-Latus rectum   ----------
             SME= ( magv*magv*0.5D0 ) - ( mu/magr )
-            IF ( DABS( SME ) .gt. Small ) THEN
+            IF ( abs( SME ) .gt. Small ) THEN
                 A= -mu / (2.0D0*SME)
               ELSE
                 A= Infinite
@@ -212,9 +141,9 @@
 
             ! -----------------  Find inclination   -------------------
             Hk= HBar(3)/maghbar
-c            IF ( DABS( DABS(Hk) - 1.0D0 ) .lt. Small ) THEN
+c            IF ( abs( abs(Hk) - 1.0D0 ) .lt. Small ) THEN
 c                ! -------------  Equatorial Orbits   ------------------
-c                IF ( DABS(HBar(3)) .gt. 0.0D0 ) THEN
+c                IF ( abs(HBar(3)) .gt. 0.0D0 ) THEN
 c                    Hk= DSIGN(1.0D0, HBar(3))
 c                  ENDIF
 c              ENDIF
@@ -225,7 +154,7 @@ c              ENDIF
             TypeOrbit= 'EI' 
             IF ( Ecc .lt. Small ) THEN
                 ! ----------------  Circular Equatorial ---------------
-                IF ( (Incl.lt.Small).or.(DABS(Incl-Pi).lt.Small) ) THEN
+                IF ( (Incl.lt.Small).or.(abs(Incl-Pi).lt.Small) ) THEN
                     TypeOrbit= 'CE'
                   ELSE
                     ! --------------  Circular Inclined ---------------
@@ -233,7 +162,7 @@ c              ENDIF
                   ENDIF
               ELSE
                 ! - Elliptical, Parabolic, Hyperbolic Equatorial --
-                IF ( (Incl.lt.Small).or.(DABS(Incl-Pi).lt.Small) ) THEN
+                IF ( (Incl.lt.Small).or.(abs(Incl-Pi).lt.Small) ) THEN
                     TypeOrbit= 'EE'
                   ENDIF
               ENDIF
@@ -241,7 +170,7 @@ c              ENDIF
             ! ----------  Find Longitude of Ascending Node ------------
             IF ( magnbar .gt. Small ) THEN
                 Temp= NBar(1) / magnbar
-                IF ( DABS(Temp) .gt. 1.0D0 ) THEN
+                IF ( abs(Temp) .gt. 1.0D0 ) THEN
                     Temp= DSIGN(1.0D0, Temp)
                   ENDIF
                 Omega= DACOS( Temp ) 
@@ -285,7 +214,7 @@ c              ENDIF
             ! -- Find Longitude of Perigee - Elliptical Equatorial ----
             IF ( ( Ecc.gt.Small ) .and. (TypeOrbit.eq.'EE') ) THEN
                 Temp= EBar(1)/Ecc
-                IF ( DABS(Temp) .gt. 1.0D0 ) THEN
+                IF ( abs(Temp) .gt. 1.0D0 ) THEN
                     Temp= DSIGN(1.0D0, Temp)
                   ENDIF
                 LonPer= DACOS( Temp ) 
@@ -302,7 +231,7 @@ c              ENDIF
             ! -------- Find True Longitude - Circular Equatorial ------
             IF ( ( magr.gt.Small ) .and. ( TypeOrbit.eq.'CE' ) ) THEN
                 Temp= R(1)/magr
-                IF ( DABS(Temp) .gt. 1.0D0 ) THEN
+                IF ( abs(Temp) .gt. 1.0D0 ) THEN
                     Temp= DSIGN(1.0D0, Temp)
                   ENDIF
                 TrueLon= DACOS( Temp )
@@ -385,8 +314,8 @@ c              ENDIF
 * -----------------------------  Locals  ------------------------------
         REAL*8 Rpqw(3), Vpqw(3), TempVec(3), Temp, SinNu, CosNu
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
 *       Determine what type of orbit is involved and set up the
@@ -394,7 +323,7 @@ c              ENDIF
         ! -------------------------------------------------------------
         IF ( Ecc .lt. Small ) THEN
             ! ----------------  Circular Equatorial  ------------------
-            IF ( (Incl.lt.Small).or.( DABS(Incl-Pi).lt. Small ) ) THEN
+            IF ( (Incl.lt.Small).or.( abs(Incl-Pi).lt. Small ) ) THEN
                 Argp = 0.0D0
                 Omega= 0.0D0 
                 Nu   = TrueLon 
@@ -405,24 +334,24 @@ c              ENDIF
               ENDIF
           ELSE
             ! ---------------  Elliptical Equatorial  -----------------
-            IF ( ( Incl.lt.Small) .or. (DABS(Incl-Pi).lt.Small) ) THEN
+            IF ( ( Incl.lt.Small) .or. (abs(Incl-Pi).lt.Small) ) THEN
                 Argp = LonPer
                 Omega= 0.0D0 
               ENDIF 
           ENDIF
 
         ! ----------  Form PQW position and velocity vectors ----------
-        CosNu= DCOS(Nu)
-        SinNu= DSIN(Nu)
+        CosNu= cos(Nu)
+        SinNu= sin(Nu)
         Temp = P / (1.0D0 + Ecc*CosNu)
         Rpqw(1)= Temp*CosNu
         Rpqw(2)= Temp*SinNu
         Rpqw(3)=     0.0D0
-        IF ( DABS(p) .lt. 0.00000001D0 ) THEN
+        IF ( abs(p) .lt. 0.00000001D0 ) THEN
             p= 0.00000001D0
           ENDIF
-        Vpqw(1)=    -SinNu    * DSQRT(mu/P)
-        Vpqw(2)=  (Ecc + CosNu) * DSQRT(mu/P)
+        Vpqw(1)=    -SinNu    * sqrt(mu/P)
+        Vpqw(2)=  (Ecc + CosNu) * sqrt(mu/P)
         Vpqw(3)=      0.0D0
 
         ! ----------------  Perform transformation to IJK  ------------
@@ -489,14 +418,14 @@ c              ENDIF
 * -----------------------------  Locals  ------------------------------
         REAL*8 recef(3), vecef(3), rtasc, decl, temp, fpav
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astreduc.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         ! -------- form position vector
-        recef(1) = rmag*dcos(latgc)*dcos(lon)
-        recef(2) = rmag*dcos(latgc)*dsin(lon)
-        recef(3) = rmag*dsin(latgc)
+        recef(1) = rmag*cos(latgc)*cos(lon)
+        recef(2) = rmag*cos(latgc)*sin(lon)
+        recef(3) = rmag*sin(latgc)
 
         ! -------- convert r to eci
         vecef(1) = 0.0D0
@@ -506,26 +435,26 @@ c        CALL ECI_ECEF( r,v, 'FROM', rECEF,vECEF,
 c     &                 TTT, JDUT1, LOD, xp, yp, terms )
 
         ! ------------- calculate rtasc and decl ------------------
-        temp= dsqrt( r(1)*r(1) + r(2)*r(2) )
+        temp= sqrt( r(1)*r(1) + r(2)*r(2) )
 
 * v needs to be defined herexxxxxxxxx
         if ( temp .lt. small ) THEN
-            rtasc= datan2( v(2) , v(1) )
+            rtasc= atan2( v(2) , v(1) )
           else
-            rtasc= datan2( r(2) , r(1) )
+            rtasc= atan2( r(2) , r(1) )
           ENDIF
         decl= asin( r(3)/rmag )
 
         ! -------- form velocity vector
         fpav = halfpi - fpa
-        v(1)= vmag*( dcos(rtasc)*(-dcos(az)*dsin(fpav)*dsin(decl) +
-     &                dcos(fpav)*dcos(decl)) - dsin(az)*dsin(fpav)*
-     &                dsin(rtasc) )
-        v(2)= vmag*( dsin(rtasc)*(-dcos(az)*dsin(fpav)*dsin(decl) +
-     &                dcos(fpav)*dcos(decl)) + dsin(az)*dsin(fpav)*
-     &                dcos(rtasc) )
-        v(3)= vmag*( dcos(az)*dcos(decl)*dsin(fpav) + dcos(fpav)*
-     &                dsin(decl) )
+        v(1)= vmag*( cos(rtasc)*(-cos(az)*sin(fpav)*sin(decl) +
+     &                cos(fpav)*cos(decl)) - sin(az)*sin(fpav)*
+     &                sin(rtasc) )
+        v(2)= vmag*( sin(rtasc)*(-cos(az)*sin(fpav)*sin(decl) +
+     &                cos(fpav)*cos(decl)) + sin(az)*sin(fpav)*
+     &                cos(rtasc) )
+        v(3)= vmag*( cos(az)*cos(decl)*sin(fpav) + cos(fpav)*
+     &                sin(decl) )
 
       RETURN
       END
@@ -575,44 +504,43 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
      &                         rmag, vmag, latgc, lon, fpa, az)
         IMPLICIT NONE
         REAL*8 R(3), V(3), rmag, vmag, latgc, lon, fpa, az, ttt, jdut1,
-     &         lod, xp, yp, Mag, hmag, DOT
+     &         lod, xp, yp, hmag
         INTEGER terms
-        EXTERNAL DOT, MAG
 
 * -----------------------------  Locals  ------------------------------
         REAL*8 recef(3), vecef(3), temp, fpav, rdotv, hcrossr(3), h(3)
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astreduc.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
-        rmag = mag(r)
-        vmag = mag(v)
+        rmag = norm2(r)
+        vmag = norm2(v)
 
         ! -------- convert r to ecef for lat/lon calculation
 c        CALL ECI_ECEF( r,v, 'TOO ', rECEF,vECEF,
 c     &                 TTT, JDUT1, LOD, xp, yp, terms )
 
         ! ----------------- find longitude value  ----------------- uses ecef
-        temp = Dsqrt( recef(1)*recef(1) + recef(2)*recef(2) )
+        temp = sqrt( recef(1)*recef(1) + recef(2)*recef(2) )
         if ( temp .lt. small ) THEN
-            lon= Datan2( vecef(2), vecef(1) )
+            lon= atan2( vecef(2), vecef(1) )
           else
-            lon= Datan2( recef(2), recef(1) )
+            lon= atan2( recef(2), recef(1) )
           ENDIF
 
-*        latgc = Datan2( recef(3) , dsqrt(recef(1)**2 + recef(2)**2) )
-        latgc = Dasin( recef(3) / rmag )
+*        latgc = atan2( recef(3) , sqrt(recef(1)**2 + recef(2)**2) )
+        latgc = asin( recef(3) / rmag )
 
         CALL cross(r, v, h)
-        hmag = mag(h)
-        rdotv= dot(r, v)
-        fpav= Datan2(hmag, rdotv)
+        hmag = norm2(h)
+        rdotv= dot_product(r, v)
+        fpav= atan2(hmag, rdotv)
         fpa = halfpi - fpav
 
         CALL cross(h, r, hcrossr)
 
-        az = Datan2( r(1)*hcrossr(2) - r(2)*hcrossr(1),
+        az = atan2( r(1)*hcrossr(2) - r(2)*hcrossr(1),
      &               hcrossr(3)*rmag )
 
       RETURN
@@ -673,8 +601,8 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
      &         arglat, truelon, lonper, e0
         INTEGER fr
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         arglat  = 999999.1D0
@@ -683,26 +611,26 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
 
         a = (mu/n**2)**(1.0D0/3.0D0)
 
-        ecc = dsqrt (af**2 + ag**2)
+        ecc = sqrt (af**2 + ag**2)
 
         p = a * (1.0D0 - ecc*ecc)
 
-        incl = 2.0D0 * datan( dsqrt(chi**2 + psi**2) )
+        incl = 2.0D0 * atan( sqrt(chi**2 + psi**2) )
 
         ! -------- setup retrograde factor ----------------------------
         fr = 1
         ! -------- set this so it only affects i = 180 deg orbits!! ---
-        if (Dabs(incl-pi) .lt. small) THEN
+        if (abs(incl-pi) .lt. small) THEN
             fr = -1
           ENDIF
 
-        omega = Datan2( chi, psi)
+        omega = atan2( chi, psi)
 
-        argp = Datan2( fr*ag, af ) - datan2( chi, psi )
+        argp = atan2( fr*ag, af ) - atan2( chi, psi )
 
         if ( ecc .lt. small ) THEN
             ! ----------------  circular equatorial  ------------------
-            if ( (incl.lt.small) .or. ( dabs(incl-pi).lt.small) ) THEN
+            if ( (incl.lt.small) .or. ( abs(incl-pi).lt.small) ) THEN
                 argp = 0.0D0
                 omega= 0.0D0
               else
@@ -711,7 +639,7 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
               ENDIF
           else
             ! ---------------  elliptical equatorial  -----------------
-            if ( (incl.lt.small) .or. (dabs(incl-pi).lt.small) ) THEN
+            if ( (incl.lt.small) .or. (abs(incl-pi).lt.small) ) THEN
                 omega= 0.0D0
               ENDIF
           ENDIF
@@ -724,7 +652,7 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
         ! ----------  fix for elliptical equatorial orbits ------------
         if ( ecc .lt. small ) THEN
             ! ----------------  circular equatorial  ------------------
-            if ((incl.lt.small) .or. ( dabs(incl-pi).lt. small )) THEN
+            if ((incl.lt.small) .or. ( abs(incl-pi).lt. small )) THEN
                 argp    = undefined
                 omega   = undefined
                 truelon = nu
@@ -736,7 +664,7 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
             nu   = undefined
           else
             ! ---------------  elliptical equatorial  -----------------
-            if ( ( incl.lt.small) .or. (dabs(incl-pi).lt.small) ) THEN
+            if ( ( incl.lt.small) .or. (abs(incl-pi).lt.small) ) THEN
                 lonper = argp
                 argp    = undefined
                 omega   = undefined
@@ -749,7 +677,7 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
 
       RETURN
       END
-*
+
 * ----------------------------------------------------------------------------
 *
 *                           function rv2eq.m
@@ -788,16 +716,15 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
 
       SUBROUTINE rv2eq       ( R, V, af, ag, meanlon, n, chi, psi)
         IMPLICIT NONE
-        REAL*8 R(3), V(3), af, ag, meanlon, n, chi, psi, DCOT
-        EXTERNAL DCOT
+        REAL*8 R(3), V(3), af, ag, meanlon, n, chi, psi
 
 * -----------------------------  Locals  ------------------------------
         REAL*8 p, a, ecc, incl, omega, argp, nu, m,
      &         arglat, truelon, lonper
         INTEGER fr
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         ! -------- convert to classical elements ----------------------
@@ -808,13 +735,13 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
         ! -------- setup retrograde factor ----------------------------
         fr = 1
         ! -------- set this so it only affects i = 180 deg orbits!! ---
-        if (dabs(incl-pi) .lt. small) THEN
+        if (abs(incl-pi) .lt. small) THEN
             fr = -1
           ENDIF
 
         if ( ecc .lt. small ) THEN
             ! ----------------  circular equatorial  ------------------
-            if ((incl.lt.small) .or. ( dabs(incl-pi).lt. small )) THEN
+            if ((incl.lt.small) .or. ( abs(incl-pi).lt. small )) THEN
                 argp = 0.0D0
                 omega= 0.0D0
               else
@@ -823,30 +750,30 @@ c     &                 TTT, JDUT1, LOD, xp, yp, terms )
               ENDIF
           else
             ! ---------------  elliptical equatorial  -----------------
-            if ( ( incl.lt.small) .or. (dabs(incl-pi).lt.small) ) THEN
+            if ( ( incl.lt.small) .or. (abs(incl-pi).lt.small) ) THEN
                 argp = lonper
                 omega= 0.0D0
               ENDIF
           ENDIF
 
-        af = ecc * dcos(fr*omega + argp)
-        ag = ecc * dsin(fr*omega + argp)
+        af = ecc * cos(fr*omega + argp)
+        ag = ecc * sin(fr*omega + argp)
 
         if (fr .gt. 0  ) THEN
-            chi = dtan(incl*0.5D0) * dsin(omega)
-            psi = dtan(incl*0.5D0) * dcos(omega)
+            chi = dtan(incl*0.5D0) * sin(omega)
+            psi = dtan(incl*0.5D0) * cos(omega)
           else
-            chi = dcot(incl*0.5D0) * dsin(omega)
-            psi = dcot(incl*0.5D0) * dcos(omega)
+            chi = cot(incl*0.5D0) * sin(omega)
+            psi = cot(incl*0.5D0) * cos(omega)
           ENDIF
 
-c        IF (DABS(ecc-1.0D0).le.small) THEN
-c            n  = 2.0D0 * dsqrt(mu/(p*p*p))
+c        IF (abs(ecc-1.0D0).le.small) THEN
+c            n  = 2.0D0 * sqrt(mu/(p*p*p))
 c          ELSE
             IF (a.gt.0.0D0) THEN
-                n  = dsqrt(mu/(a*a*a))
+                n  = sqrt(mu/(a*a*a))
               ELSE
-                n  = dsqrt(-mu/(a*a*a))
+                n  = sqrt(-mu/(a*a*a))
               ENDIF
 c          ENDIF
 
@@ -898,19 +825,19 @@ c          ENDIF
 
         ! --------------------  Implementation   ----------------------
         ! -------- form position vector
-        r(1)= rmag*dcos(decl)*dcos(rtasc)
-        r(2)= rmag*dcos(decl)*dsin(rtasc)
-        r(3)= rmag*dsin(decl)
+        r(1)= rmag*cos(decl)*cos(rtasc)
+        r(2)= rmag*cos(decl)*sin(rtasc)
+        r(3)= rmag*sin(decl)
 
         ! -------- form velocity vector
-        v(1)= vmag*( dcos(rtasc)*(-dcos(az)*dsin(fpav)*dsin(decl) +
-     &                dcos(fpav)*dcos(decl)) - dsin(az)*dsin(fpav)*
-     &                dsin(rtasc) )
-        v(2)= vmag*( dsin(rtasc)*(-dcos(az)*dsin(fpav)*dsin(decl) +
-     &                dcos(fpav)*dcos(decl)) + dsin(az)*dsin(fpav)*
-     &                dcos(rtasc) )
-        v(3)= vmag*( dcos(az)*dcos(decl)*dsin(fpav) + dcos(fpav)*
-     &               dsin(decl) )
+        v(1)= vmag*( cos(rtasc)*(-cos(az)*sin(fpav)*sin(decl) +
+     &                cos(fpav)*cos(decl)) - sin(az)*sin(fpav)*
+     &                sin(rtasc) )
+        v(2)= vmag*( sin(rtasc)*(-cos(az)*sin(fpav)*sin(decl) +
+     &                cos(fpav)*cos(decl)) + sin(az)*sin(fpav)*
+     &                cos(rtasc) )
+        v(3)= vmag*( cos(az)*cos(decl)*sin(fpav) + cos(fpav)*
+     &               sin(decl) )
 
       RETURN
       END
@@ -951,41 +878,40 @@ c          ENDIF
 *
 * ----------------------------------------------------------------------------
 
-      SUBROUTINE rv2adbar    ( R, V, rmag, vmag, rtasc, decl, fpav, az)
+      SUBROUTINE rv2adbar( R, V, rmag, vmag, rtasc, decl, fpav, az)
         IMPLICIT NONE
-        REAL*8 R(3), V(3), rmag, vmag, rtasc, decl, fpav, az, Dot, MAG
-        EXTERNAL DOT, MAG
+        REAL*8 R(3), V(3), rmag, vmag, rtasc, decl, fpav, az
+
 
 * -----------------------------  Locals  ------------------------------
         REAL*8 temp, temp1, h(3), hcrossr(3), rdotv, hmag
 
-        INCLUDE 'astmath.cmn'
-
+       
         ! --------------------  Implementation   ----------------------
-        rmag = mag(r)
-        vmag = mag(v)
+        rmag = norm2(r)
+        vmag = norm2(v)
 
         ! ---------------- calculate rtasc and decl -------------------
-        temp= dsqrt( r(1)*r(1) + r(2)*r(2) )
+        temp= sqrt( r(1)*r(1) + r(2)*r(2) )
         if ( temp .lt. small ) THEN
-            temp1= dsqrt( v(1)*v(1) + v(2)*v(2) )
-            if ( dabs(temp1) .gt. small ) THEN
-                rtasc= datan2( v(2) , v(1) )
+            temp1= sqrt( v(1)*v(1) + v(2)*v(2) )
+            if ( abs(temp1) .gt. small ) THEN
+                rtasc= atan2( v(2) , v(1) )
               else
                 rtasc= 0.0D0
               ENDIF
           else
-            rtasc= datan2( r(2), r(1) )
+            rtasc= atan2( r(2), r(1) )
           ENDIF
         decl= asin( r(3)/rmag )
 
         CALL cross(r, v, h)
-        hmag = mag(h)
-        rdotv= dot(r, v)
-        fpav = datan2(hmag, rdotv)
+        hmag = norm2(h)
+        rdotv= dot_product(r, v)
+        fpav = atan2(hmag, rdotv)
 
         CALL cross(h, r, hcrossr)
-        az = datan2( r(1)*hcrossr(2) - r(2)*hcrossr(1),
+        az = atan2( r(1)*hcrossr(2) - r(2)*hcrossr(1),
      &               hcrossr(3)*rmag )
 
       RETURN
@@ -1058,20 +984,20 @@ c          ENDIF
         transmat(3,2) = wvec(2)
         transmat(3,3) = wvec(3)
 
-        CALL MatVecMult  ( transmat, r, 3,3,3,3, rrsw )
-        CALL MatVecMult  ( transmat, v, 3,3,3,3, vrsw )
+        rrsw = matmul(transmat, r)
+        vrsw = matmul(transmat, v)
 
 *   alt approach
-*       rrsw(1) = mag(r)
+*       rrsw(1) = norm2(r)
 *       rrsw(2) = 0.0D0
 *       rrsw(3) = 0.0D0
-*       vrsw(1) = dot(r, v)/rrsw(1)
-*       vrsw(2) = dsqrt(v(1)**2 + v(2)**2 + v(3)**2 - vrsw(1)**2)
+*       vrsw(1) = dot_product(r, v)/rrsw(1)
+*       vrsw(2) = sqrt(v(1)**2 + v(2)**2 + v(3)**2 - vrsw(1)**2)
 *       vrsw(3) = 0.0D0
 
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           function rv2ntw
@@ -1139,8 +1065,8 @@ c          ENDIF
         transmat(3,2) = wvec(2)
         transmat(3,3) = wvec(3)
 
-        CALL MatVecMult  ( transmat, r, 3,3,3,3, rntw )
-        CALL MatVecMult  ( transmat, v, 3,3,3,3, vntw )
+        rntw = matmul( transmat, r)
+        vntw = matmul(transmat, v)
 
       RETURN
       END
@@ -1179,16 +1105,16 @@ c          ENDIF
 * -----------------------------  Locals  ------------------------------
         REAL*8 SqrtZ
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         IF ( ZNew .gt. Small ) THEN
-            SqrtZ = DSQRT( ZNew )
-            C2New = (1.0D0-DCOS( SqrtZ )) / ZNew
-            C3New = (SqrtZ-DSIN( SqrtZ )) / ( SqrtZ**3 )
+            SqrtZ = sqrt( ZNew )
+            C2New = (1.0D0-cos( SqrtZ )) / ZNew
+            C3New = (SqrtZ-sin( SqrtZ )) / ( SqrtZ**3 )
           ELSE
             IF ( ZNew .lt. -Small ) THEN
-                SqrtZ = DSQRT( -ZNew )
+                SqrtZ = sqrt( -ZNew )
                 C2New = (1.0D0-COSH( SqrtZ )) / ZNew 
                 C3New = (SINH( SqrtZ ) - SqrtZ) / ( SqrtZ**3 )
               ELSE
@@ -1236,36 +1162,36 @@ c          ENDIF
 * -----------------------------  Locals  ------------------------------
         Real*8 Sinv, Cosv
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         ! ------------------------- Circular --------------------------
-        IF ( DABS( Ecc ) .lt. Small ) THEN
+        IF ( abs( Ecc ) .lt. Small ) THEN
             M = E0
             Nu= E0 
           ELSE
 
             ! ----------------------- Elliptical ----------------------
             IF ( Ecc .lt. 0.999D0 ) THEN
-                M= E0 - Ecc*DSIN(E0)
-                Sinv= ( DSQRT( 1.0D0-Ecc*Ecc ) * DSIN(E0) ) /
-     &                ( 1.0D0-Ecc*DCOS(E0) )
-                Cosv= ( DCOS(E0)-Ecc ) / ( 1.0D0 - Ecc*DCOS(E0) ) 
-                Nu  = DATAN2( Sinv, Cosv )
+                M= E0 - Ecc*sin(E0)
+                Sinv= ( sqrt( 1.0D0-Ecc*Ecc ) * sin(E0) ) /
+     &                ( 1.0D0-Ecc*cos(E0) )
+                Cosv= ( cos(E0)-Ecc ) / ( 1.0D0 - Ecc*cos(E0) ) 
+                Nu  = atan2( Sinv, Cosv )
               ELSE
 
                 ! ---------------------- Hyperbolic  ------------------
                 IF ( Ecc .gt. 1.0001D0 ) THEN
                     M= Ecc*SINH(E0) - E0
-                    Sinv= ( DSQRT( Ecc*Ecc-1.0D0 ) * SINH(E0) ) /
+                    Sinv= ( sqrt( Ecc*Ecc-1.0D0 ) * SINH(E0) ) /
      &                    ( 1.0D0 - Ecc*COSH(E0) )
                     Cosv= ( COSH(E0)-Ecc ) / ( 1.0D0 - Ecc*COSH(E0) ) 
-                    Nu  = DATAN2( Sinv, Cosv )
+                    Nu  = atan2( Sinv, Cosv )
                   ELSE
 
                     ! -------------------- Parabolic ------------------
                     M= E0 + (1.0D0/3.0D0)*E0*E0*E0
-                    Nu= 2.0D0*DATAN(E0) 
+                    Nu= 2.0D0*atan(E0) 
                   ENDIF 
               ENDIF
           ENDIF
@@ -1306,22 +1232,20 @@ c          ENDIF
 *
 *  Coupling      :
 *    CUBIC       - Solves a CUBIC polynomial
-*    SINH        - Hyperbolic Sine
-*    COSH        - Hyperbolic Cosine
-*
+
 *  References    :
 *    Vallado       2001, 73, Alg 2, Ex 2-1
 *
 * ------------------------------------------------------------------------------
-*
+
       SUBROUTINE NEWTONM     ( Ecc, M, E0, Nu )
         IMPLICIT NONE
         REAL*8 Ecc, M, E0, Nu
-        EXTERNAL DCot
+
 * -----------------------------  Locals  ------------------------------
         INTEGER Ktr, NumIter
-        REAL*8 E1, Sinv, Cosv, R1r, R1i, R2r, R2i, R3r, R3i, DCot
-        INCLUDE 'astmath.cmn'
+        REAL*8 E1, Sinv, Cosv, R1r, R1i, R2r, R2i, R3r, R3i
+        
 
         ! --------------------  Implementation   ----------------------
         NumIter =    50
@@ -1335,7 +1259,7 @@ c          ENDIF
                     E0= M + Ecc
                   ENDIF
               ELSE
-                IF ( (Ecc .lt. 3.6D0) .and. (DABS(M) .gt. Pi) ) THEN
+                IF ( (Ecc .lt. 3.6D0) .and. (abs(M) .gt. Pi) ) THEN
                     E0= M - DSIGN(1.0D0, M)*Ecc
                   ELSE
                     E0= M/(Ecc-1.0D0)
@@ -1343,28 +1267,28 @@ c          ENDIF
               ENDIF
             Ktr= 1
             E1 = E0 + ( (M-Ecc*SINH(E0)+E0) / (Ecc*COSH(E0) - 1.0D0) )
-            DO WHILE ((DABS(E1-E0).gt.Small ) .and. ( Ktr.le.NumIter ))
+            DO WHILE ((abs(E1-E0).gt.Small ) .and. ( Ktr.le.NumIter ))
                 E0= E1
                 E1= E0 + ( ( M - Ecc*SINH(E0) + E0 ) /
      &                     ( Ecc*COSH(E0) - 1.0D0 ) )
                 Ktr = Ktr + 1
               ENDDO
             ! ----------------  Find True Anomaly  --------------------
-            Sinv= -( DSQRT( Ecc*Ecc-1.0D0 ) * SINH(E1) ) /
+            Sinv= -( sqrt( Ecc*Ecc-1.0D0 ) * SINH(E1) ) /
      &             ( 1.0D0 - Ecc*COSH(E1) )
             Cosv= ( COSH(E1) - Ecc ) / ( 1.0D0 - Ecc*COSH(E1) )
-            Nu  = DATAN2( Sinv, Cosv )
+            Nu  = atan2( Sinv, Cosv )
           ELSE
             ! --------------------- Parabolic -------------------------
-            IF ( DABS( Ecc-1.0D0 ) .lt. Small ) THEN
+            IF ( abs( Ecc-1.0D0 ) .lt. Small ) THEN
                 CALL CUBIC( 1.0D0/3.0D0, 0.0D0, 1.0D0, -M, R1r, R1i,
      &                      R2r, R2i, R3r, R3i )
                 E0= R1r
-*                 S = 0.5D0 * (HalfPi - DATAN( 1.5D0*M ) )
-*                 W = DATAN( DTAN( S )**(1.0D0/3.0D0) )
-*                 E0= 2.0D0*DCOT(2.0D0*W)
+*                 S = 0.5D0 * (HalfPi - atan( 1.5D0*M ) )
+*                 W = atan( DTAN( S )**(1.0D0/3.0D0) )
+*                 E0= 2.0D0*COT(2.0D0*W)
                 Ktr= 1
-                Nu = 2.0D0 * DATAN(E0)
+                Nu = 2.0D0 * atan(E0)
               ELSE
                 ! -------------------- Elliptical ----------------------
                 IF ( Ecc .gt. Small ) THEN
@@ -1376,20 +1300,20 @@ c          ENDIF
                         E0= M + Ecc
                       ENDIF
                     Ktr= 1
-                    E1 = E0 + ( M - E0 + Ecc*DSIN(E0) ) /
-     &                        ( 1.0D0 - Ecc*DCOS(E0) )
-                    DO WHILE (( DABS(E1-E0) .gt. Small ) .and.
+                    E1 = E0 + ( M - E0 + Ecc*sin(E0) ) /
+     &                        ( 1.0D0 - Ecc*cos(E0) )
+                    DO WHILE (( abs(E1-E0) .gt. Small ) .and.
      &                       ( Ktr .le. NumIter ))
                         Ktr = Ktr + 1
                         E0= E1
-                        E1= E0 + ( M - E0 + Ecc*DSIN(E0) ) /
-     &                           ( 1.0D0 - Ecc*DCOS(E0) )
+                        E1= E0 + ( M - E0 + Ecc*sin(E0) ) /
+     &                           ( 1.0D0 - Ecc*cos(E0) )
                       ENDDO
                     ! -------------  Find True Anomaly  ---------------
-                    Sinv= ( DSQRT( 1.0D0-Ecc*Ecc ) * DSIN(E1) ) /
-     &                    ( 1.0D0-Ecc*DCOS(E1) )
-                    Cosv= ( DCOS(E1)-Ecc ) / ( 1.0D0 - Ecc*DCOS(E1) )
-                    Nu  = DATAN2( Sinv, Cosv )
+                    Sinv= ( sqrt( 1.0D0-Ecc*Ecc ) * sin(E1) ) /
+     &                    ( 1.0D0-Ecc*cos(E1) )
+                    Cosv= ( cos(E1)-Ecc ) / ( 1.0D0 - Ecc*cos(E1) )
+                    Nu  = atan2( Sinv, Cosv )
                   ELSE
                     ! -------------------- Circular -------------------
                     Ktr= 0
@@ -1427,9 +1351,7 @@ c          ENDIF
 *    Ktr         - Index
 *
 *  Coupling      :
-*    ASINH     - Arc hyperbolic sine
-*    SINH        - Hyperbolic Sine
-*
+
 *  References    :
 *    Vallado       2007, 85, Alg 5
 *
@@ -1438,40 +1360,40 @@ c          ENDIF
       SUBROUTINE NEWTONNU    ( Ecc, Nu, E0, M )
         IMPLICIT NONE
         REAL*8 Ecc, Nu, E0, M
-        EXTERNAL ASINH
-* -----------------------------  Locals  ------------------------------
-        REAL*8 SinE, CosE, ASINH
 
-        INCLUDE 'astmath.cmn'
+* -----------------------------  Locals  ------------------------------
+        REAL*8 SinE, CosE
+
+        
 
         ! --------------------  Implementation   ----------------------
         E0= 999999.9D0
         M = 999999.9D0
         ! --------------------------- Circular ------------------------
-        IF ( DABS( Ecc ) .lt. 0.000001D0 ) THEN
+        IF ( abs( Ecc ) .lt. 0.000001D0 ) THEN
             M = Nu
             E0= Nu 
           ELSE
             ! ---------------------- Elliptical -----------------------
             IF ( Ecc .lt. 0.999D0 ) THEN
-                SinE= ( DSQRT( 1.0D0-Ecc*Ecc ) * DSIN(Nu) ) /
-     &                ( 1.0D0+Ecc*DCOS(Nu) )
-                CosE= ( Ecc + DCOS(Nu) ) / ( 1.0D0 + Ecc*DCOS(Nu) )
-                E0  = DATAN2( SinE, CosE )
-                M   = E0 - Ecc*DSIN(E0) 
+                SinE= ( sqrt( 1.0D0-Ecc*Ecc ) * sin(Nu) ) /
+     &                ( 1.0D0+Ecc*cos(Nu) )
+                CosE= ( Ecc + cos(Nu) ) / ( 1.0D0 + Ecc*cos(Nu) )
+                E0  = atan2( SinE, CosE )
+                M   = E0 - Ecc*sin(E0) 
               ELSE
                 ! -------------------- Hyperbolic  --------------------
                 IF ( Ecc .gt. 1.0001D0 ) THEN
-                    IF ( ((Ecc .gt. 1.0D0) .and. (DABS(Nu)+0.00001D0
+                    IF ( ((Ecc .gt. 1.0D0) .and. (abs(Nu)+0.00001D0
      &                     .lt. Pi-DACOS(1.0D0/Ecc)) ) ) THEN
-                        SinE= ( DSQRT( Ecc*Ecc-1.0D0 ) * DSIN(Nu) ) /
-     &                        ( 1.0D0 + Ecc*DCOS(Nu) )
+                        SinE= ( sqrt( Ecc*Ecc-1.0D0 ) * sin(Nu) ) /
+     &                        ( 1.0D0 + Ecc*cos(Nu) )
                         E0  = ASINH( SinE )
-                        M   = Ecc*DSINH(E0) - E0
+                        M   = Ecc*SINH(E0) - E0
                       ENDIF 
                   ELSE
                     ! ----------------- Parabolic ---------------------
-                    IF ( DABS(Nu) .lt. 168.0D0/57.29578D0 ) THEN
+                    IF ( abs(Nu) .lt. 168.0D0/57.29578D0 ) THEN
                         E0= DTAN( Nu*0.5D0 )
                         M = E0 + (E0*E0*E0)/3.0D0 
                       ENDIF
@@ -1546,21 +1468,21 @@ c          ENDIF
 *    Vallado       2007, 101, Alg 8, Ex 2-4
 *
 * ------------------------------------------------------------------------------
-*
+
       SUBROUTINE KEPLER      ( Ro, Vo, dtsec, R, V, Error )
         IMPLICIT NONE
         REAL*8 Ro(3), Vo(3), dtsec, R(3), V(3), Dot
         CHARACTER*12 Error
-        EXTERNAL Dot, DCot, Mag
+
 * -----------------------------  Locals  ------------------------------
         INTEGER Ktr, i, NumIter
         REAL*8 H(3), F, G, FDot, GDot, Rval, XOld, XOldSqrd, XNew,
      &      XNewSqrd, ZNew, p, C2New, C3New, DtNew, RDotV, A,
-     &      DCot, mag, Alpha, SME, Period, S, W, Temp,
+     &      Alpha, SME, Period, S, W, Temp,
      &      magro, magvo, magh, magr
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         NumIter    =    35
@@ -1570,61 +1492,61 @@ c          ENDIF
         ZNew= 0.0D0
         Error= 'ok' 
 
-        IF ( DABS( dtsec ) .gt. Small ) THEN
-            magro = MAG( Ro )
-            magvo = MAG( Vo )
-            RDotV= DOT( Ro, Vo )
+        IF ( abs( dtsec ) .gt. Small ) THEN
+            magro = norm2( Ro )
+            magvo = norm2( Vo )
+            RDotV= dot_product( Ro, Vo )
 
             ! -------------  Find SME, Alpha, and A  ------------------
             SME= ( magvo*magvo*0.5D0 ) - ( mu/magro )
             Alpha= -SME*2.0D0 / mu
 
-            IF ( DABS( SME ) .gt. Small ) THEN
+            IF ( abs( SME ) .gt. Small ) THEN
                 A= -mu / ( 2.0D0*SME )
               ELSE
                 A= Infinite
               ENDIF
-            IF ( DABS( Alpha ) .lt. Small ) THEN ! Parabola
+            IF ( abs( Alpha ) .lt. Small ) THEN ! Parabola
                 Alpha= 0.0D0
               ENDIF
 
             ! ------------   Setup initial guess for x  ---------------
             ! -----------------  Circle and Ellipse -------------------
             IF ( Alpha .ge. Small ) THEN
-                Period= TwoPi * DSQRT( DABS(A)**3/mu )
+                Period= TwoPi * sqrt( abs(A)**3/mu )
                 ! ------- Next IF needed for 2body multi-rev ----------
-                IF ( DABS( dtsec ) .gt. DABS( Period ) ) THEN
+                IF ( abs( dtsec ) .gt. abs( Period ) ) THEN
                     dtsec= DMOD( dtsec, Period )
                   ENDIF
-                IF ( DABS(Alpha-1.0D0) .gt. Small ) THEN
-                     XOld = DSQRT(mu) * dtsec * Alpha
+                IF ( abs(Alpha-1.0D0) .gt. Small ) THEN
+                     XOld = sqrt(mu) * dtsec * Alpha
                   ELSE
                      ! 1st guess can't be too close. ie a circle, r=a
-                     XOld= DSQRT(mu) * dtsec*Alpha*0.97D0
+                     XOld= sqrt(mu) * dtsec*Alpha*0.97D0
                   ENDIF
               ELSE
                 ! --------------------  Parabola  ---------------------
-                IF ( DABS( Alpha ) .lt. Small ) THEN
+                IF ( abs( Alpha ) .lt. Small ) THEN
                     CALL CROSS( ro, vo, h )
-                    magh = MAG(h)
+                    magh = norm2(h)
                     p= magh*magh/mu
-                    S= 0.5D0 * (HalfPi - DATAN( 3.0D0*DSQRT( mu/
+                    S= 0.5D0 * (HalfPi - atan( 3.0D0*sqrt( mu/
      &                         (p*p*p) )* dtsec ) )
-                    W= DATAN( DTAN( S )**(1.0D0/3.0D0) )
-                    XOld = DSQRT(p) * ( 2.0D0*DCOT(2.0D0*W) )
+                    W= atan( DTAN( S )**(1.0D0/3.0D0) )
+                    XOld = sqrt(p) * ( 2.0D0*COT(2.0D0*W) )
                     Alpha= 0.0D0 
                   ELSE
                     ! ------------------  Hyperbola  ------------------
                     Temp= -2.0D0*mu*dtsec /
-     &                   ( A*( RDotV + DSIGN(1.0D0, dtsec)*DSQRT(-mu*A)*
+     &                   ( A*( RDotV + DSIGN(1.0D0, dtsec)*sqrt(-mu*A)*
      &                   (1.0D0-magro*Alpha) ) )
-                    XOld= DSIGN(1.0D0, dtsec) * DSQRT(-A) *DLOG(Temp)
+                    XOld= DSIGN(1.0D0, dtsec) * sqrt(-A) *DLOG(Temp)
                   ENDIF
-*
+
               ENDIF
             Ktr= 1
             DtNew = -10.0D0
-            DO WHILE ( (DABS(DtNew-DSQRT(mu)*dtsec).ge.Small).and.
+            DO WHILE ( (abs(DtNew-sqrt(mu)*dtsec).ge.Small).and.
      &                 (Ktr.lt.NumIter) )
                 XOldSqrd = XOld*XOld 
                 ZNew     = XOldSqrd * Alpha
@@ -1633,22 +1555,22 @@ c          ENDIF
                 CALL FINDC2C3( ZNew, C2New, C3New )
 
                 ! ------- Use a Newton iteration for New values -------
-                DtNew= XOldSqrd*XOld*C3New + (RDotV/DSQRT(mu))*XOldSqrd
+                DtNew= XOldSqrd*XOld*C3New + (RDotV/sqrt(mu))*XOldSqrd
      &                   *C2New + magro*XOld*( 1.0D0 - ZNew*C3New )
-                Rval = XOldSqrd*C2New + (RDotV/DSQRT(mu))*XOld*(1.0D0-
+                Rval = XOldSqrd*C2New + (RDotV/sqrt(mu))*XOld*(1.0D0-
      &                   ZNew*C3New) + magro*( 1.0D0 - ZNew*C2New )
 
                 ! ------------- Calculate New value for x -------------
-                XNew = XOld + ( DSQRT(mu)*dtsec - DtNew ) / Rval
+                XNew = XOld + ( sqrt(mu)*dtsec - DtNew ) / Rval
 
 * ------------------------------------------------------
-*  Check If the orbit is an ellipse and xNew .gt. 2pi DSQRT(a), the step
+*  Check If the orbit is an ellipse and xNew .gt. 2pi sqrt(a), the step
 *  size must be changed.  This is accomplished by multiplying Rval
 *  by 10.0D0.  NOTE !! 10.0D0 is arbitrary, but seems to produce good
 *  results.  The idea is to keep XNew from increasing too rapidily.
 * ------------------------------------------------------
 *  including this doesn't work If you don't MOD the dtsec
-*             IF ( ( A .gt. 0.0D0 ) .and. ( DABS(XNew)>TwoPi*DSQRT(A) ) .and. ( SME .lt. 0.0D0 ) ) THEN
+*             IF ( ( A .gt. 0.0D0 ) .and. ( abs(XNew)>TwoPi*sqrt(A) ) .and. ( SME .lt. 0.0D0 ) ) THEN
 *                 Dx= ( dtsec-DtNew ) / Rval  ! *7.0D0  * 10.0D0
 *                 XNew = XOld + Dx / 7.0D0   ! /(1.0D0 + Dx)
 *!   Alternate method to test various values of change
@@ -1670,19 +1592,19 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
                 ! --- Find position and velocity vectors at New time --
                 XNewSqrd = XNew*XNew
                 F = 1.0D0 - ( XNewSqrd*C2New / magro )
-                G = dtsec - XNewSqrd*XNew*C3New/DSQRT(mu)
+                G = dtsec - XNewSqrd*XNew*C3New/sqrt(mu)
                 DO i= 1 , 3
                     R(i)= F*Ro(i) + G*Vo(i)
                   ENDDO
-                magr = MAG( R )
+                magr = norm2( R )
                 GDot = 1.0D0 - ( XNewSqrd*C2New / magr )
-                FDot = ( DSQRT(mu)*XNew / ( magro*magr ) ) *
+                FDot = ( sqrt(mu)*XNew / ( magro*magr ) ) *
      &                 ( ZNew*C3New-1.0D0 )
                 DO i= 1 , 3
                     V(i)= FDot*Ro(i) + GDot*Vo(i)
                   ENDDO
                 Temp= F*GDot - FDot*G 
-                IF ( DABS(Temp-1.0D0) .gt. 0.00001D0 ) THEN
+                IF ( abs(Temp-1.0D0) .gt. 0.00001D0 ) THEN
                     Error= 'FandG'
                   ENDIF 
               ENDIF  ! IF (
@@ -1733,9 +1655,7 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
 *
 *  Coupling      :
 *    CROSS       - CROSS product of two vectors
-*    SINH        - Hyperbolic Sine
-*    ACOSH     - Arc hyperbolic cosine
-*
+
 *  References    :
 *    Vallado       2007, 134, Alg 11
 *
@@ -1743,23 +1663,20 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
 
       SUBROUTINE FINDTOF     ( Ro, R, p, Tof )
         IMPLICIT NONE
-        REAL*8 Ro(3), R(3), p, Tof, MAG
-        EXTERNAL Dot, ACOSH, MAG
+        REAL*8 Ro(3), R(3), p, Tof
 * -----------------------------  Locals  ------------------------------
-        REAL*8 RCrossR(3), CosDNu, SinDNu, Small, c , s, alpha, DeltaE,
+        REAL*8 RCrossR(3), CosDNu, SinDNu, c , s, alpha, DeltaE,
      &    DeltaH, DNu, k, l, m, a, f, g, FDot, SinDeltaE, CosDeltaE,
-     &    Dot, ACOSH, magro, magr, magrcrossr
+     &    magro, magr, magrcrossr
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
-        Small = 0.00001D0 
-
-        magro = MAG(ro)
-        magr = MAG(r)
-        CosDNu= DOT(Ro, R)/(magro*magr)
+        magro = norm2(ro)
+        magr = norm2(r)
+        CosDNu= dot_product(Ro, R)/(magro*magr)
         CALL CROSS( Ro, R, RCrossR )
-        magrcrossr = MAG(rcrossr)
+        magrcrossr = norm2(rcrossr)
         SinDNu= magRCrossR/(magro*magr)
 
         k= magro * magr*( 1.0D0-CosDNu )
@@ -1769,30 +1686,30 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
 
         ! ------  Use F and G series to find Velocity Vectors  --------
         F = 1.0D0 - ( magr/p )*(1.0D0-CosDNu)
-        G = magro*magr*SinDNu/DSQRT(mu*p)
+        G = magro*magr*SinDNu/sqrt(mu*p)
         Alpha= 1.0D0/a 
 
         IF ( alpha .gt. Small ) THEN
             ! ------------------------ Elliptical ---------------------
-            DNu  = DATAN2( SinDNu, CosDNu )
-            FDot = DSQRT(mu/p) * DTAN(DNu*0.5D0)*
+            DNu  = atan2( SinDNu, CosDNu )
+            FDot = sqrt(mu/p) * DTAN(DNu*0.5D0)*
      &              ( ((1.0D0-CosDNu)/p)-(1.0D0/magro)-(1.0D0/magr) )
             COSDeltaE= 1.0D0-(magro/a)*(1.0D0-f)
-            SinDeltaE= (-magro*magr*FDot)/DSQRT(mu*a)
-            DeltaE   = DATAN2( SinDeltaE, CosDeltaE )
-            Tof      = G + DSQRT(a*a*a/mu)*(DeltaE-SinDeltaE)
+            SinDeltaE= (-magro*magr*FDot)/sqrt(mu*a)
+            DeltaE   = atan2( SinDeltaE, CosDeltaE )
+            Tof      = G + sqrt(a*a*a/mu)*(DeltaE-SinDeltaE)
           ELSE
             ! ------------------------ Hyperbolic ---------------------
             IF ( alpha .lt. -Small ) THEN
                 DeltaH = ACOSH( 1.0D0-(magro/a)*(1.0D0-F) )
-                Tof    = G + DSQRT(-a*a*a/mu)*(SINH(DeltaH)-DeltaH)
+                Tof    = G + sqrt(-a*a*a/mu)*(SINH(DeltaH)-DeltaH)
               ELSE
                 ! -------------------- Parabolic ----------------------
-                DNu= DATAN2( SinDNu, CosDNu )
-                c  = DSQRT( magr*magr+magro*magro -
-     &                     2.0D0*magr*magro*DCOS(DNu) )
+                DNu= atan2( SinDNu, CosDNu )
+                c  = sqrt( magr*magr+magro*magro -
+     &                     2.0D0*magr*magro*cos(DNu) )
                 s  = (magro+magr+c ) * 0.5D0
-                Tof= ( 2.0D0/3.0D0 ) * DSQRT(s*s*s*0.5D0/mu) *
+                Tof= ( 2.0D0/3.0D0 ) * sqrt(s*s*s*0.5D0/mu) *
      &                     (1.0D0 -  ((s-c)/s)**1.5D0 )
               ENDIF 
           ENDIF
@@ -1858,89 +1775,87 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
       SUBROUTINE ijk2llA ( R, JD, Latgc, Latgd, Lon, Hellp )
         IMPLICIT NONE
         REAL*8 R(3), JD, Latgc, Latgd, Lon, Hellp
-        EXTERNAL GSTIME, MAG
+
 * -----------------------------  Locals  ------------------------------
         INTEGER i
-        REAL*8 RtAsc, OldDelta, c, Decl,
-     &         Temp, GST, SinTemp, GSTime, MAG, magr
+        REAL*8 RtAsc, OldDelta, c, Decl, Temp, GST, SinTemp,  magr
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
 
         ! --------------------  Implementation   ----------------------
-        magr = MAG( R )
+        magr = norm2( R )
 
         ! ----------------- Find Longitude value  ---------------------
-        Temp = DSQRT( R(1)*R(1) + R(2)*R(2) )
-        IF ( DABS( Temp ) .lt. Small ) THEN
+        Temp = sqrt( R(1)*R(1) + R(2)*R(2) )
+        IF ( abs( Temp ) .lt. Small ) THEN
             RtAsc= DSIGN(1.0D0, R(3))*Pi*0.5D0
           ELSE
-            RtAsc= DATAN2( R(2) / Temp , R(1) / Temp )
+            RtAsc= atan2( R(2) / Temp , R(1) / Temp )
           ENDIF
         GST  = GSTIME( JD ) 
         Lon  = RtAsc - GST 
-        IF ( DABS(Lon) .ge. Pi ) THEN ! Mod it ?
+        IF ( abs(Lon) .ge. Pi ) THEN ! Mod it ?
             IF ( Lon .lt. 0.0D0 ) THEN
                 Lon= TwoPi + Lon
               ELSE
                 Lon= Lon - TwoPi 
               ENDIF
           ENDIF
-        Decl = DASIN( R(3) / magr )
+        Decl = asin( R(3) / magr )
         Latgd= Decl 
 
         ! ------------- Iterate to find Geodetic Latitude -------------
         i= 1 
         OldDelta = Latgd + 10.0D0
 
-        DO WHILE ((DABS(OldDelta-Latgd).ge.Small).and.(i.lt.10))
+        DO WHILE ((abs(OldDelta-Latgd).ge.Small).and.(i.lt.10))
             OldDelta= Latgd 
-            SinTemp = DSIN( Latgd ) 
-            c       = rekm / (DSQRT( 1.0D0-EESqrd*SinTemp*SinTemp ))
-            Latgd= DATAN( (r(3)+c*EESqrd*SinTemp)/Temp )
+            SinTemp = sin( Latgd ) 
+            c       = rekm / (sqrt( 1.0D0-EESqrd*SinTemp*SinTemp ))
+            Latgd= atan( (r(3)+c*EESqrd*SinTemp)/Temp )
             i = i + 1
           ENDDO
 
-        Hellp   = (Temp/DCOS(Latgd)) - c
+        Hellp   = (Temp/cos(Latgd)) - c
 
         CALL gc2gd( Latgc, 'FROM', Latgd )
 
       RETURN
       END
-*
+
+
+
       SUBROUTINE ijk2llE ( R, JD, Latgc, Latgd, Lon, Hellp )
         IMPLICIT NONE
         REAL*8 R(3), JD, Latgc, Latgd, Lon, Hellp
-        EXTERNAL GSTIME, MAG
 
 * -----------------------------  Locals  ------------------------------
         INTEGER i
         Real*8 rsite, DeltaLat, RSqrd
         REAL*8 RtAsc, OldDelta, Decl,
-     &         Temp, GST, SinTemp, GSTime, OneMinusE2, MAG, magr
+     &         Temp, GST, SinTemp,  OneMinusE2,  magr
         CHARACTER Show
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         Show = 'N'
 
        ! -------------------  Initialize values   --------------------
-        magr = MAG( R )
+        magr = norm2( R )
         OneMinuse2 = 1.0D0 - EeSqrd
 
        ! ---------------- Find Longitude value  ----------------------
-        Temp = DSQRT( R(1)*R(1) + R(2)*R(2) )
-        IF ( DABS( Temp ) .lt. Small ) THEN
+        Temp = sqrt( R(1)*R(1) + R(2)*R(2) )
+        IF ( abs( Temp ) .lt. Small ) THEN
             RtAsc= DSIGN(1.0D0, R(3))*Pi*0.5D0
           ELSE
-            RtAsc= DATAN2( R(2) / Temp , R(1) / Temp )
+            RtAsc= atan2( R(2) / Temp , R(1) / Temp )
           ENdif
         GST  = GSTIME( JD )
         Lon  = RtAsc - GST 
 
-        IF ( DABS(Lon) .ge. Pi ) THEN
+        IF ( abs(Lon) .ge. Pi ) THEN
             IF ( Lon .lt. 0.0D0 ) THEN
                 Lon= TwoPi + Lon
               ELSE
@@ -1948,24 +1863,24 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
               ENDIF
           ENDIF
        ! -------------- Set up initial latitude value  ---------------  
-        Decl    = DASIN( R(3) / magr )
+        Decl    = asin( R(3) / magr )
         Latgc= Decl 
         DeltaLat= 100.0D0 
         RSqrd   = magr**2
 
        ! ---- Iterate to find Geocentric .and. Geodetic Latitude  -----  
         i= 1 
-        DO WHILE ( ( DABS( OldDelta - DeltaLat ) .ge. Small ) .and.
+        DO WHILE ( ( abs( OldDelta - DeltaLat ) .ge. Small ) .and.
      &             ( i .lt. 10 ))
             OldDelta = DeltaLat 
-            rsite    = DSQRT( OneMinuse2 / (1.0D0 -
-     &                 EeSqrd*(DCOS(Latgc))**2 ) )
-            Latgd = DATAN( DTAN(Latgc) / OneMinuse2 ) 
+            rsite    = sqrt( OneMinuse2 / (1.0D0 -
+     &                 EeSqrd*(cos(Latgc))**2 ) )
+            Latgd = atan( DTAN(Latgc) / OneMinuse2 ) 
             Temp     = Latgd-Latgc 
-            SinTemp  = DSIN( Temp ) 
-            Hellp    = DSQRT( RSqrd - rsite*rsite*SinTemp*SinTemp ) -
-     &                 rsite*DCOS(Temp)
-            DeltaLat = DASIN( Hellp*SinTemp / magr )
+            SinTemp  = sin( Temp ) 
+            Hellp    = sqrt( RSqrd - rsite*rsite*SinTemp*SinTemp ) -
+     &                 rsite*cos(Temp)
+            DeltaLat = asin( Hellp*SinTemp / magr )
             Latgc = Decl - DeltaLat 
             i = i + 1
             IF ( Show .eq. 'Y' ) THEN
@@ -1980,32 +1895,30 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
 
       RETURN
       END
-*
+
 * ------------------------------- Borkowski method  --------------------------
       SUBROUTINE ijk2llB ( R , JD, Latgc, Latgd, Lon, Hellp )
         IMPLICIT NONE
         REAL*8 JD, R(3), Latgc, Latgd, Lon, Hellp
-        EXTERNAL GSTIME, MAG
-        REAL*8 GSTIME, MAG
 
 * -----------------------------  Locals  ------------------------------
         Real*8 a, b, RtAsc, sqrtp, third, e, f, p, q, d, nu, g, t,
      &         aTemp, Temp, GST
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
 
         ! ---------------- Find Longitude value  ----------------------
-        Temp = DSQRT( R(1)*R(1) + R(2)*R(2) )
-        IF ( DABS( Temp ) .lt. Small ) THEN
+        Temp = sqrt( R(1)*R(1) + R(2)*R(2) )
+        IF ( abs( Temp ) .lt. Small ) THEN
             RtAsc= DSIGN(1.0D0, R(3))*Pi*0.5D0
           ELSE
-            RtAsc= DATAN2( R(2) / Temp , R(1) / Temp )
+            RtAsc= atan2( R(2) / Temp , R(1) / Temp )
           ENDIF
         GST  = GSTIME( JD )
         Lon  = RtAsc - GST 
-        IF ( DABS(Lon) .ge. Pi ) THEN
+        IF ( abs(Lon) .ge. Pi ) THEN
             IF ( Lon .lt. 0.0D0 ) THEN
                 Lon= TwoPi + Lon
               ELSE
@@ -2025,16 +1938,16 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
         d= p*p*p + q*q 
 
         IF ( d .gt. 0.0D0 ) THEN
-            nu= (DSQRT(d)-q)**third - (DSQRT(d)+q)**third
+            nu= (sqrt(d)-q)**third - (sqrt(d)+q)**third
           ELSE
-            SqrtP= DSQRT(-p)
-            nu= 2.0D0*SqrtP*DCOS( third*DACOS(q/(p*SqrtP)) ) 
+            SqrtP= sqrt(-p)
+            nu= 2.0D0*SqrtP*cos( third*DACOS(q/(p*SqrtP)) ) 
           ENDIF 
-        g= 0.5D0*(DSQRT(e*e + nu) + e) 
-        t= DSQRT(g*g + (f-nu*g)/(2.0D0*g-e)) - g 
+        g= 0.5D0*(sqrt(e*e + nu) + e) 
+        t= sqrt(g*g + (f-nu*g)/(2.0D0*g-e)) - g 
 
-        Latgd= DATAN(a*(1.0D0-t*t)/(2.0D0*b*t)) 
-        hellp= (temp-a*t)*DCOS( Latgd) + (r(3)-b)*DSIN(Latgd)
+        Latgd= atan(a*(1.0D0-t*t)/(2.0D0*b*t)) 
+        hellp= (temp-a*t)*cos( Latgd) + (r(3)-b)*sin(Latgd)
 
         CALL gc2gd( Latgc, 'FROM', Latgd )
       RETURN
@@ -2072,18 +1985,18 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
         REAL*8 Latgc, Latgd
         CHARACTER*4 Direction
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         IF ( Direction .eq. 'FROM' ) THEN
-            Latgc= DATAN( (1.0D0 - EESqrd)*DTAN(Latgd) )
+            Latgc= atan( (1.0D0 - EESqrd)*DTAN(Latgd) )
           ELSE
-            Latgd= DATAN( DTAN(Latgc)/(1.0D0 - EESqrd) )
+            Latgd= atan( DTAN(Latgc)/(1.0D0 - EESqrd) )
           ENDIF
       RETURN
       END
 
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE SIGHT
@@ -2124,17 +2037,17 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
 * ------------------------------------------------------------------------------
 
       SUBROUTINE SIGHT       ( R1, R2, WhichKind, LOS )
-        IMPLICIT NONE
+
         REAL*8 R1(3), R2(3)
         INTEGER i
         CHARACTER WhichKind
-        CHARACTER*3 LOS
-        EXTERNAL Dot, MAG
+        CHARACTER(3) LOS
+
 * -----------------------------  Locals  ------------------------------
         REAL*8 TR1(3), TR2(3), ADotB, TMin, DistSqrd, ASqrd,
-     &         BSqrd, Temp, Dot, Mag, magtr1, magtr2
+     &         BSqrd, Temp,  magtr1, magtr2
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         DO i=1 , 3
@@ -2143,20 +2056,20 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
           ENDDO
         ! --------------------- Scale z component ---------------------
         IF ( WhichKind .eq. 'E' ) THEN
-            Temp= 1.0D0/DSQRT(1.0D0-EESqrd)
+            Temp= 1.0D0/sqrt(1.0D0-EESqrd)
           ELSE
             Temp= 1.0D0
           ENDIF
         TR1(3)= TR1(3)*Temp
         TR2(3)= TR2(3)*Temp
-        magtr1 = MAG(tr1)
-        magtr2 = MAG(tr2)
+        magtr1 = norm2(tr1)
+        magtr2 = norm2(tr2)
         BSqrd= magTR2**2
         ASqrd= magTR1**2
-        ADotB= DOT( TR1, TR2 )
+        ADotB= dot_product( TR1, TR2 )
         ! ---------------------- Find TMin ----------------------------
         DistSqrd= 0.0D0
-        IF ( DABS(ASqrd + BSqrd - 2.0D0*ADotB) .lt. 0.0001D0 ) THEN
+        IF ( abs(ASqrd + BSqrd - 2.0D0*ADotB) .lt. 0.0001D0 ) THEN
             TMin= 0.0D0
           ELSE
             TMin = ( ASqrd - ADotB ) / ( ASqrd + BSqrd - 2.0D0*ADotB )
@@ -2174,7 +2087,7 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
           ENDIF
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE SUN
@@ -2226,7 +2139,7 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
         REAL*8 MeanLong, MeanAnomaly,
      &        EclpLong, Obliquity, TUT1, TTDB, magrsun
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         ! -------------------  Initialize values   --------------------
@@ -2242,8 +2155,8 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
             MeanAnomaly= TwoPi + MeanAnomaly
           ENDIF
 
-        EclpLong= MeanLong + 1.914666471D0*DSIN(MeanAnomaly)
-     &              + 0.019994643D0*DSIN(2.0D0*MeanAnomaly) !deg
+        EclpLong= MeanLong + 1.914666471D0*sin(MeanAnomaly)
+     &              + 0.019994643D0*sin(2.0D0*MeanAnomaly) !deg
 
         Obliquity= 23.439291D0 - 0.0130042D0*TTDB  !deg
 
@@ -2255,22 +2168,22 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
         Obliquity= Obliquity *Deg2Rad 
 
         ! ------- Find magnitude of SUN vector, ) THEN components -----
-        magRSun= 1.000140612D0 - 0.016708617D0*DCOS( MeanAnomaly )
-     &                         - 0.000139589D0*DCOS( 2.0D0*MeanAnomaly )    ! in AU's
+        magRSun= 1.000140612D0 - 0.016708617D0*cos( MeanAnomaly )
+     &                         - 0.000139589D0*cos( 2.0D0*MeanAnomaly )    ! in AU's
 
-        RSun(1)= magRSun*DCOS( EclpLong )
-        RSun(2)= magRSun*DCOS(Obliquity)*DSIN(EclpLong)
-        RSun(3)= magRSun*DSIN(Obliquity)*DSIN(EclpLong)
+        RSun(1)= magRSun*cos( EclpLong )
+        RSun(2)= magRSun*cos(Obliquity)*sin(EclpLong)
+        RSun(3)= magRSun*sin(Obliquity)*sin(EclpLong)
 
-        RtAsc= DATAN( DCOS(Obliquity)*DTAN(EclpLong) )
+        RtAsc= atan( cos(Obliquity)*DTAN(EclpLong) )
         ! --- Check that RtAsc is in the same quadrant as EclpLong ----
         IF ( EclpLong .lt. 0.0D0 ) THEN
             EclpLong= EclpLong + TwoPi    ! make sure it's in 0 to 2pi range
           ENDIF
-        IF ( DABS( EclpLong-RtAsc ) .gt. Pi*0.5D0 ) THEN
+        IF ( abs( EclpLong-RtAsc ) .gt. Pi*0.5D0 ) THEN
             RtAsc= RtAsc + 0.5D0*Pi*DNINT( (EclpLong-RtAsc)/(0.5D0*Pi))
           ENDIF
-        Decl = DASIN( DSIN(Obliquity)*DSIN(EclpLong) )
+        Decl = asin( sin(Obliquity)*sin(EclpLong) )
 
       RETURN
       END
@@ -2287,7 +2200,7 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
         Real*8 lst, gst, x, LHA, sinv, cosv
         Real*8 l0, l1, l2, l3, sRtAsc, sdecl
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         CALL SUN( JD, RSun, sRtAsc, sDecl ) ! AU's needed for Sun ill
@@ -2296,13 +2209,13 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
 
         LHA = LST - sRtAsc
 
-        SunEl  = DASIN( dsin(sDecl)*dsin(Lat) +
-     &           dcos(sDecl)*dcos(Lat)*dcos(LHA) )
+        SunEl  = asin( sin(sDecl)*sin(Lat) +
+     &           cos(sDecl)*cos(Lat)*cos(LHA) )
 
-        Sinv= -dsin(LHA)*dcos(sDecl)*dcos(Lat)/(dcos(SunEl)*dcos(Lat))
-        Cosv= ( dsin(sDecl)-dsin(SunEl)*dsin(Lat) )/
-     &        ( dcos(SunEl)*dcos(Lat) )
-        SunAz  = DATAN2( Sinv, Cosv )
+        Sinv= -sin(LHA)*cos(sDecl)*cos(Lat)/(cos(SunEl)*cos(Lat))
+        Cosv= ( sin(sDecl)-sin(SunEl)*sin(Lat) )/
+     &        ( cos(SunEl)*cos(Lat) )
+        SunAz  = atan2( Sinv, Cosv )
 
         SunEl= SunEl/Deg2Rad
 
@@ -2408,29 +2321,29 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
         REAL*8 TTDB, l, m, n, Obliquity, magrmoon, EclpLong, EclpLat,
      &         HzParal
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         TTDB = ( JD - 2451545.0D0 ) / 36525.0D0
 
         EclpLong= 218.32D0 + 481267.883D0*TTDB
-     &              + 6.29D0*DSIN( (134.9D0+477198.85D0*TTDB)*Deg2Rad )
-     &              - 1.27D0*DSIN( (259.2D0-413335.38D0*TTDB)*Deg2Rad )
-     &              + 0.66D0*DSIN( (235.7D0+890534.23D0*TTDB)*Deg2Rad )
-     &              + 0.21D0*DSIN( (269.9D0+954397.70D0*TTDB)*Deg2Rad )
-     &              - 0.19D0*DSIN( (357.5D0+ 35999.05D0*TTDB)*Deg2Rad )
-     &              - 0.11D0*DSIN( (186.6D0+966404.05D0*TTDB)*Deg2Rad )  ! Deg
+     &              + 6.29D0*sin( (134.9D0+477198.85D0*TTDB)*Deg2Rad )
+     &              - 1.27D0*sin( (259.2D0-413335.38D0*TTDB)*Deg2Rad )
+     &              + 0.66D0*sin( (235.7D0+890534.23D0*TTDB)*Deg2Rad )
+     &              + 0.21D0*sin( (269.9D0+954397.70D0*TTDB)*Deg2Rad )
+     &              - 0.19D0*sin( (357.5D0+ 35999.05D0*TTDB)*Deg2Rad )
+     &              - 0.11D0*sin( (186.6D0+966404.05D0*TTDB)*Deg2Rad )  ! Deg
 
-        EclpLat =   5.13D0*DSIN( ( 93.3D0+483202.03D0*TTDB)*Deg2Rad )
-     &              + 0.28D0*DSIN( (228.2D0+960400.87D0*TTDB)*Deg2Rad )
-     &              - 0.28D0*DSIN( (318.3D0+  6003.18D0*TTDB)*Deg2Rad )
-     &              - 0.17D0*DSIN( (217.6D0-407332.20D0*TTDB)*Deg2Rad )  ! Deg
+        EclpLat =   5.13D0*sin( ( 93.3D0+483202.03D0*TTDB)*Deg2Rad )
+     &              + 0.28D0*sin( (228.2D0+960400.87D0*TTDB)*Deg2Rad )
+     &              - 0.28D0*sin( (318.3D0+  6003.18D0*TTDB)*Deg2Rad )
+     &              - 0.17D0*sin( (217.6D0-407332.20D0*TTDB)*Deg2Rad )  ! Deg
 
-        HzParal =  0.9508D0 + 0.0518D0*DCOS( (134.9D0+477198.85D0*TTDB)
+        HzParal =  0.9508D0 + 0.0518D0*cos( (134.9D0+477198.85D0*TTDB)
      &              *Deg2Rad )
-     &            + 0.0095D0*DCOS( (259.2D0-413335.38D0*TTDB)*Deg2Rad )
-     &            + 0.0078D0*DCOS( (235.7D0+890534.23D0*TTDB)*Deg2Rad )
-     &            + 0.0028D0*DCOS( (269.9D0+954397.70D0*TTDB)*Deg2Rad )  ! Deg
+     &            + 0.0095D0*cos( (259.2D0-413335.38D0*TTDB)*Deg2Rad )
+     &            + 0.0078D0*cos( (235.7D0+890534.23D0*TTDB)*Deg2Rad )
+     &            + 0.0028D0*cos( (269.9D0+954397.70D0*TTDB)*Deg2Rad )  ! Deg
 
         EclpLong = DMOD( EclpLong*Deg2Rad, TwoPi )
         EclpLat  = DMOD( EclpLat*Deg2Rad, TwoPi )
@@ -2440,21 +2353,21 @@ c               Write(*,*) ' Not converged in ', NumIter:2,' iterations '
         Obliquity= Obliquity *Deg2Rad
 
         ! ------------ Find the geocentric direction cosines ----------
-        l= DCOS( EclpLat ) * DCOS( EclpLong )
-        m= DCOS(Obliquity)*DCOS(EclpLat)*DSIN(EclpLong)
-     &       - DSIN(Obliquity)*DSIN(EclpLat)
-        n= DSIN(Obliquity)*DCOS(EclpLat)*DSIN(EclpLong)
-     &       + DCOS(Obliquity)*DSIN(EclpLat)
+        l= cos( EclpLat ) * cos( EclpLong )
+        m= cos(Obliquity)*cos(EclpLat)*sin(EclpLong)
+     &       - sin(Obliquity)*sin(EclpLat)
+        n= sin(Obliquity)*cos(EclpLat)*sin(EclpLong)
+     &       + cos(Obliquity)*sin(EclpLat)
 
         ! ------------- Calculate MOON position vector ----------------
-        magRMoon= 1.0D0/DSIN( HzParal )
+        magRMoon= 1.0D0/sin( HzParal )
         RMoon(1)= magRMoon*l
         RMoon(2)= magRMoon*m
         RMoon(3)= magRMoon*n
 
         ! -------------- Find Rt Ascension and Declination ------------
-        RtAsc= DATAN2( m, l )
-        Decl = DASIN( n )
+        RtAsc= atan2( m, l )
+        Decl = asin( n )
 
       RETURN
       END
@@ -2500,10 +2413,10 @@ c                 g= 0.0
        l1= l0 + l1*x + l2*x*x + l3*x*x*x
        l2= (-0.00868D0*f - 2.2D-9*f*f*f*f)
 
-*       HzParal =   0.9508 + 0.0518*dcos( (134.9+477198.85*TTDB)*Deg2Rad )
-*                + 0.0095*dcos( (259.2-413335.38*TTDB)*Deg2Rad )
-*                + 0.0078*dcos( (235.7+890534.23*TTDB)*Deg2Rad )
-*                + 0.0028*dcos( (269.9+954397.70*TTDB)*Deg2Rad )   { Deg }
+*       HzParal =   0.9508 + 0.0518*cos( (134.9+477198.85*TTDB)*Deg2Rad )
+*                + 0.0095*cos( (259.2-413335.38*TTDB)*Deg2Rad )
+*                + 0.0078*cos( (235.7+890534.23*TTDB)*Deg2Rad )
+*                + 0.0028*cos( (269.9+954397.70*TTDB)*Deg2Rad )   { Deg }
 *       HzParal  = REALMOD( HzParal*Deg2Rad, TwoPi )
 *       l3= (2.0* POWER(10.0, (HzParal*rad / 0.951))*g ) { use g to eliminate neg el passes }
 
@@ -2539,7 +2452,6 @@ c                 g= 0.0
 *
 *  Coupling      :
 *    SUN         - Position vector of SUN
-*    LNCOM1      - Multiple a vector by a constant
 *    SIGHT       - Does Line-of-SIGHT exist beteen vectors
 *
 *  References    :
@@ -2548,25 +2460,26 @@ c                 g= 0.0
 * ------------------------------------------------------------------------------
 
       SUBROUTINE LIGHT       ( R, JD, WhichKind, LIT )
-        IMPLICIT NONE
+
         REAL*8 R(3), JD
-        CHARACTER WhichKind, Lit(3)
+        CHARACTER WhichKind
+        character(3) Lit
 * -----------------------------  Locals  ------------------------------
         REAL*8 RSun(3), RtAsc, Decl
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
 
         CALL SUN( JD, RSun, RtAsc, Decl )
-        CALL LNCOM1( AUER, RSun, RSun )
+        RSun = AUER * RSun
 
         ! ------------ Is the satellite in the shadow? ----------------
         CALL SIGHT( RSun, R, WhichKind, Lit )
 
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE CHECKHITEARTH
@@ -2610,37 +2523,38 @@ c                 g= 0.0
         IMPLICIT NONE
         REAL*8 RInt(3), V1t(3), RTgt(3), V2t(3)
         CHARACTER HitEarth
-        EXTERNAL DOT, MAG
+
 * -----------------------------  Locals  ------------------------------
-        REAL*8 HBar(3), SME, rp, TransP, TransA, TransE, Dot, Mag,
+        REAL*8 HBar(3), SME, rp, TransP, TransA, TransE,
      &         magrint, magv1t, maghbar
 
         ! --------------------  Implementation   ----------------------
         HitEarth= 'N'
 
         ! ---------- Find If trajectory intersects Earth --------------
-        IF ((DOT(Rint,V1t).lt.0.0D0).and.(DOT(RTgt,V2t).gt.0.0D0)) THEN
+        IF ((dot_product(Rint,V1t).lt.0.0D0).and.
+     &      (dot_product(RTgt,V2t).gt.0.0D0)) THEN
 
             ! ---------------  Find H N and E vectors   ---------------
             CALL CROSS( RInt, V1t, HBar )
-            magrint = MAG( rint )
-            magv1t  = MAG( v1t )
-            maghbar = MAG( HBar )
+            magrint = norm2( rint )
+            magv1t  = norm2( v1t )
+            maghbar = norm2( HBar )
 
             IF ( maghbar .gt. 0.00001D0 ) THEN
                 ! ---------  Find a e and semi-Latus rectum   ---------
                 SME    = magV1t**2*0.5D0 - ( 1.0D0/magRInt )
                 TransP = maghbar*maghbar
                 TransE = 1.0D0
-                IF ( DABS( SME ) .gt. 0.00001D0 ) THEN
+                IF ( abs( SME ) .gt. 0.00001D0 ) THEN
                     TransA= -1.0D0 / (2.0D0*SME)
-                    TransE= DSQRT( (TransA - TransP)/TransA )
+                    TransE= sqrt( (TransA - TransP)/TransA )
                     rp= TransA*(1.0D0-TransE) 
                   ELSE
                     rp= TransP*0.5D0   ! Parabola
                   ENDIF
 
-                IF ( DABS( rp ) .lt. 1.0D0 ) THEN
+                IF ( abs( rp ) .lt. 1.0D0 ) THEN
                     HitEarth= 'Y' 
                   ENDIF
               ELSE
@@ -2708,26 +2622,26 @@ c                 g= 0.0
         REAL*8 r, EtaHoriz, rhoHoriz, gamma, rho, FovMin, Lat,
      &     Lon, maxLat, minLat
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         ! ------- Find satellite parameters and limiting cases --------
         r       = 1.0D0 + SAlt 
-        EtaHoriz= DASIN(1.0D0/r) 
-        RhoHoriz= r*DCOS(EtaHoriz) 
+        EtaHoriz= asin(1.0D0/r) 
+        RhoHoriz= r*cos(EtaHoriz) 
 
         ! ---------------- Find Ground range ANGLE --------------------
         FovMax= tFOV*0.5D0 + EtaCtr 
-        Gamma = Pi - DASIN( r*DSIN(FovMax) )   ! must use larger ANGLE
-        Rho   = DCOS( gamma ) + r*DCOS(FovMax) 
-        RhoMax= DASIN( Rho*DSIN(FovMax) ) 
+        Gamma = Pi - asin( r*sin(FovMax) )   ! must use larger ANGLE
+        Rho   = cos( gamma ) + r*cos(FovMax) 
+        RhoMax= asin( Rho*sin(FovMax) ) 
 
         ! -------- for minimum, If the sensor looks off axis ----------
-        IF ( DABS(EtaCtr) .gt. 0.00001D0 ) THEN
+        IF ( abs(EtaCtr) .gt. 0.00001D0 ) THEN
             FovMin  = EtaCtr - tFOV*0.5D0
-            Gamma   = Pi - DASIN( r*DSIN(FovMin) )  ! use larger
-            Rho     = DCOS( gamma ) + r*DCOS(FovMin) 
-            RhoMin  = DASIN( Rho*DSIN(FovMin) ) 
+            Gamma   = Pi - asin( r*sin(FovMin) )  ! use larger
+            Rho     = cos( gamma ) + r*cos(FovMin) 
+            RhoMin  = asin( Rho*sin(FovMin) ) 
             TotalRng= RhoMax - RhoMin 
           ELSE
             ! --------------------- Nadir pointing --------------------
@@ -2737,7 +2651,7 @@ c                 g= 0.0
           ENDIF
 
         ! -------------- Find location of center of FOV ---------------
-        IF ( DABS(EtaCtr) .gt. 0.00001D0 ) THEN
+        IF ( abs(EtaCtr) .gt. 0.00001D0 ) THEN
             CALL PATH( SLatgd, SLon, RhoMin + TotalRng*0.5D0, Az,
      &                 Lat, Lon )
           ELSE
@@ -2800,27 +2714,27 @@ c                 g= 0.0
         IMPLICIT NONE
         REAL*8 LLat, LLon, TLat, TLon, Tof, Range, Az
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
-        Range= DACOS( DSIN(LLat)*DSIN(TLat) +
-     &         DCOS(LLat)*DCOS(TLat)*DCOS(TLon-LLon + OmegaEarth*Tof) )
+        Range= DACOS( sin(LLat)*sin(TLat) +
+     &         cos(LLat)*cos(TLat)*cos(TLon-LLon + OmegaEarth*Tof) )
 
         ! ------ Check If the Range is 0 .or. half the earth  ---------
-        IF ( DABS( DSIN(Range)*DCOS(LLat) ) .lt. Small ) THEN
-            IF ( DABS( Range - Pi ) .lt. Small ) THEN
+        IF ( abs( sin(Range)*cos(LLat) ) .lt. Small ) THEN
+            IF ( abs( Range - Pi ) .lt. Small ) THEN
                 Az= Pi
               ELSE
                 Az= 0.0D0
               ENDIF
           ELSE
-            Az= DACOS( ( DSIN(TLat) - DCOS(Range) * DSIN(LLat)) /
-     &                 ( DSIN(Range) * DCOS(LLat)) )
+            Az= DACOS( ( sin(TLat) - cos(Range) * sin(LLat)) /
+     &                 ( sin(Range) * cos(LLat)) )
           ENDIF
 
         ! ------ Check If the Azimuth is grt than Pi ( 180deg ) -------
-        IF ( DSIN( TLon - LLon + OmegaEarth*Tof ) .lt. 0.0D0 ) THEN
+        IF ( sin( TLon - LLon + OmegaEarth*Tof ) .lt. 0.0D0 ) THEN
             Az= TwoPi - Az
           ENDIF
       RETURN
@@ -2864,7 +2778,7 @@ c                 g= 0.0
 * -----------------------------  Locals  ------------------------------
         REAL*8 SinDN, CosDN, DeltaN
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         Az= DMOD( Az, TwoPi )
@@ -2876,19 +2790,19 @@ c                 g= 0.0
           ENDIF
 
         ! ----------------- Find Geocentric Latitude  -----------------
-        TLat = DASIN( DSIN(LLat)*DCOS(Range) +
-     &         DCOS(LLat)*DSIN(Range)*DCOS(Az) )
+        TLat = asin( sin(LLat)*cos(Range) +
+     &         cos(LLat)*sin(Range)*cos(Az) )
 
         ! ---- Find Delta N, the ANGLE between the points -------------
-        IF ( (DABS(DCOS(TLat)) .gt. Small) .and.
-     &        (DABS(DCOS(LLat)) .gt. Small) ) THEN
-            SinDN = DSIN(Az)*DSIN(Range) / DCOS(TLat)
-            CosDN = ( DCOS(Range)-DSIN(TLat)*DSIN(LLat) ) /
-     &                 ( DCOS(TLat)*DCOS(LLat) )
-            DeltaN= DATAN2(SinDN, CosDN)
+        IF ( (abs(cos(TLat)) .gt. Small) .and.
+     &        (abs(cos(LLat)) .gt. Small) ) THEN
+            SinDN = sin(Az)*sin(Range) / cos(TLat)
+            CosDN = ( cos(Range)-sin(TLat)*sin(LLat) ) /
+     &                 ( cos(TLat)*cos(LLat) )
+            DeltaN= atan2(SinDN, CosDN)
           ELSE
             ! ------ Case where launch is within 3nm of a Pole --------
-            IF ( DABS(DCOS(LLat)) .le. Small ) THEN
+            IF ( abs(cos(LLat)) .le. Small ) THEN
                 IF ( (Range .gt. Pi) .and. (Range .lt. TwoPi) ) THEN
                     DeltaN= Az + Pi
                   ELSE
@@ -2896,13 +2810,13 @@ c                 g= 0.0
                   ENDIF
               ENDIF
             ! ----- Case where ENDIF point is within 3nm of a pole ----
-            IF ( DABS( DCOS(TLat) ) .le. Small ) THEN
+            IF ( abs( cos(TLat) ) .le. Small ) THEN
                 DeltaN= 0.0D0 
               ENDIF
           ENDIF 
 
         TLon= LLon + DeltaN
-        IF ( DABS(TLon) .gt. TwoPi ) THEN
+        IF ( abs(TLon) .gt. TwoPi ) THEN
             TLon= DMOD( TLon, TwoPi )
           ENDIF
         IF ( TLon .lt. 0.0D0 ) THEN
@@ -2910,4 +2824,5 @@ c                 g= 0.0
           ENDIF   
       RETURN
       END
-*
+      
+      end module ast2body

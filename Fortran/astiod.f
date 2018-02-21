@@ -1,7 +1,9 @@
-*   -------------------------------------------------------------------
-*
-*                              ASTIOD.FOR
-*
+      module astiod
+      use comm
+      use astmath
+      use ast2body
+      use astreduc
+      implicit none
 *   this file contains fundamental astrodynamic procedures and functions
 *   relating to the initial orbit determination techniques. see ch 7 for
 *   a complete discussion of these routines.
@@ -29,59 +31,7 @@
 *         Asttime
 *         Ast2body
 *         Astreduc
-*     Uses common files:
-*         Astmath.cmn
-*
-*
-*      SUBROUTINE SITE        ( Latgd,Alt,Lon, RSecef,VSecef )
-*
-*      ------------------ Angles-only techniques ----------------------
-*
-*      SUBROUTINE ANGLESLAPLACE( Delta1,Delta2,Delta3,Alpha1,Alpha2,
-*     &                          Alpha3,JD1,JD2,JD3,RS1,RS2,RS3, r2,v2)
-*
-*      SUBROUTINE ANGLESGAUSS ( Delta1,Delta2,Delta3,Alpha1,Alpha2,
-*     &                         Alpha3,JD1,JD2,JD3,RS1,RS2,RS3, r2,v2 )
-*
-*      ------------------- Conversion techniques ----------------------
-*
-*      SUBROUTINE RV_RADEC    ( Rijk,Vijk, Direction, rr,RtAsc,Decl,
-*     &                         DRr,DRtAsc,DDecl )
-*
-*      SUBROUTINE RV_TRADEC   ( Rijk,Vijk,RSecef, Direction, Rho,TRtAsc,
-*     &                         TDecl,DRho,DTRtAsc,DTDecl )
-*
-*      SUBROUTINE RV_RAZEL    ( Reci,Veci,Latgd,Lon,alt,TTT,jdut1,lod,
-*     &                         xp,yp,terms, Direction,
-*     &                         Rho,Az,El,DRho,DAz,DEl )
-*
-*      SUBROUTINE RV_ELATLON  ( Rijk,Vijk, Direction, rr,EclLat,EclLon,
-*     &                         DRr,DEclLat,DEclLon )
-*
-*      SUBROUTINE RVSEZ_RAZEL ( Rhosez,DRhosez,Direction, Rho,Az,El,
-*     &                         DRho,DAz,DEl )
-*
-*      SUBROUTINE RADEC_ELATLON ( RtAsc,Decl,Direction, EclLat, EclLon)
-*
-*      SUBROUTINE RADEC_AZEL  ( RtAsc,Decl,LST,Latgd, Direction, Az,El)
-*
-*      ------------------- Three vector techniques --------------------
-*
-*      SUBROUTINE GIBBS       ( R1,R2,R3, V2, Theta,Theta1,Copa, Error)
-*
-*      SUBROUTINE HERRGIBBS   ( R1,R2,R3,JD1,JD2,JD3, V2, Theta,Theta1,
-*     &                         Copa, Error )
-*
-*      ------------------------ Lambert techniques --------------------
-*
-*      SUBROUTINE LAMBERTUNIV ( ro,r, dm,OverRev, Dtsec, vo,v, Error )
-*
-*      SUBROUTINE LAMBERTBATTIN ( ro,r, dm,OverRev, Dtsec, vo,v, Error )
-*
-*      SUBROUTINE TARGET      ( RInt,VInt,RTgt,VTgt, Dm,Kind, Dtsec,
-*     &                         V1t,V2t,DV1,DV2, Error  )
-*
-*
+      contains
 * ---------------------------------------------------------------------------
 *
 *                           SUBROUTINE SITE
@@ -122,7 +72,7 @@
 * -----------------------------  Locals  ------------------------------
         REAL*8 SinLat, CEarth, Rdel, Rk
 
-        INCLUDE 'astconst.cmn'
+
 
         ! --------------------  Implementation   ----------------------
         SinLat      = DSIN( Latgd ) 
@@ -143,7 +93,7 @@
         VSecef(3) = 0.0D0
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE ANGLESLAPLACE
@@ -204,7 +154,6 @@
 *    Roots        -
 *
 *  Coupling       :
-*    MAG          - Magnitude of a vector
 *    DETERMINANT  - Evaluate the determinant of a matrix
 *    CROSS        - CROSS product of two vectors
 *    NORM         - Normlize a matrix
@@ -214,24 +163,24 @@
 *    Vallado       2001, 413-417
 *
 * ------------------------------------------------------------------------------  
-*
+
       SUBROUTINE ANGLESLAPLACE ( Delta1,Delta2,Delta3,Alpha1,Alpha2,
      &                      Alpha3,JD1,JD2,JD3,RS1,RS2,RS3, r2,v2 )
-        IMPLICIT NONE
+     
         REAL*8 Delta1,Delta2,Delta3,Alpha1,Alpha2,Alpha3,JD1,JD2,JD3,
      &         RS1(3),RS2(3),RS3(3),r2(3),v2(3)
-        EXTERNAL DETERMINANT, Dot, Mag
+
 * -----------------------------  Locals  ------------------------------
         INTEGER i, j, k
-        REAL*8 Small, Poly(16),Roots(15,2), MAG
+        REAL*8 Small, Poly(16),Roots(15,2)
         REAL*8 DMat(3,3), DMat1(3,3), DMat2(3,3), DMat3(3,3),DMat4(3,3)
         REAL*8 L1(3), L2(3), L3(3), LDot(3), LDDot(3), RS2Dot(3),
      &         RS2DDot(3), EarthRate(3), Temp(3), Temp1(3),magr2,
      &         D, D1, D2, D3, D4, Rho, RhoDot, t1t13, t1t3, t31t3,
-     &         tau1, tau3, BigR2, L2DotRS, Determinant, Dot, magtemp,
+     &         tau1, tau3, BigR2, L2DotRS, magtemp,
      &         magtemp1, magrs2
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
 c        TUDay        =     0.00933809017716D0
@@ -281,9 +230,9 @@ c        TUDay        =     0.00933809017716D0
 
         ! ------------------- Find 2nd derivative of RSecef ---------------
         CALL CROSS( RS1,RS2, Temp )
-        magtemp = MAG(Temp)
+        magtemp = norm2(Temp)
         CALL CROSS( RS2,RS3, Temp1 )
-        magtemp1 = MAG(Temp1)
+        magtemp1 = norm2(Temp1)
 *
 *      needs a different test xxxx!!  
         IF ( ( DABS(magtemp) .gt. Small ) .and.
@@ -360,8 +309,8 @@ c        TUDay        =     0.00933809017716D0
 *
         IF ( DABS(D) .gt. 0.000001D0 ) THEN
             ! --------------- Solve eighth order poly -----------------
-            L2DotRS= DOT( L2,RS2 ) 
-            magrs2 = MAG(rs2)
+            L2DotRS= dot_product( L2,RS2 ) 
+            magrs2 = norm2(rs2)
             Poly( 1)=  1.0D0  ! r2^8th variable!!!!!!!!!!!!!!
             Poly( 2)=  0.0D0
             Poly( 3)=  (L2DotRS*4.0D0*D1/D - 4.0D0*D1*d1/(D*D)
@@ -405,7 +354,7 @@ c        TUDay        =     0.00933809017716D0
             DO k= 1 , 3
                 r2(k)= Rho*L2(k) + RS2(k)
               ENDDO
-            magr2 = MAG( r2 )
+            magr2 = norm2( r2 )
             ! ---------------- Find RhoDot magnitude ------------------
             RhoDot= -D3/D - Mu*D4/(magr2**3*D)
 *        WriteLn( FileOut,'Rho ',Rho:14:7 )
@@ -478,7 +427,6 @@ c        TUDay        =     0.00933809017716D0
 *  Coupling       :
 *    Detrminant   - Evaluate the determinant of a matrix
 *    FACTOR       - Find roots of a polynomial
-*    MATMULT      - Multiply two matrices together
 *    GIBBS        - GIBBS method of orbit determination
 *    HGIBBS       - Herrick GIBBS method of orbit determination
 *    ANGLE        - ANGLE between two vectors
@@ -487,27 +435,26 @@ c        TUDay        =     0.00933809017716D0
 *    Vallado       2001, 417-421, Alg 49, Ex 7-2 (425-427)
 *
 * ------------------------------------------------------------------------------  
-*
+
       SUBROUTINE ANGLESGAUSS ( Delta1,Delta2,Delta3,Alpha1,Alpha2,
      &                      Alpha3,JD1,JD2,JD3,RS1,RS2,RS3, r2,v2 )
-        IMPLICIT NONE
+
         REAL*8 Delta1,Delta2,Delta3,Alpha1,Alpha2,Alpha3,JD1,JD2,JD3,
      &         RS1(3),RS2(3),RS3(3),r2(3),v2(3)
-        EXTERNAL Determinant, Dot, MAG
 * -----------------------------  Locals  ------------------------------
         INTEGER i, ll, j
         REAL*8 small, Roots(15,2), Poly(16),
      &         r1(3), r3(3), L1(3), L2(3), L3(3)
         CHARACTER*12 Error
         REAL*8 LMatIi(3,3), CMat(3,1),RhoMat(3,1), LMatI(3,3),
-     &         RSMat(3,3),LIR(3,3), Determinant, Dot, magrs2
-        REAL*8 rDot, tau1, tau3, u, uDot, p, MAG, magr2, magr1, magr3,
+     &         RSMat(3,3),LIR(3,3),  magrs2
+        REAL*8 rDot, tau1, tau3, u, uDot, p, magr2, magr1, magr3,
      &         f1, g1, f3, g3, a, ecc, incl, omega, argp,
      &         Nu, m, l, ArgPer, BigR2, a1, a1u, a3, a3u, d, d1,
      &         d2, c1, c3, L2DotRS, rhoold1, rhoold2, rhoold3,
      &         rad,  theta, theta1, copa, TauSqr
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
 *        TUDay        =    58.132440906D0
@@ -556,8 +503,8 @@ c        TUDay        =     0.00933809017716D0
         LMatI(2,3) = (-L1(1)*L3(2)+L1(2)*L3(1)) / D
         LMatI(3,3) = ( L1(1)*L2(2)-L1(2)*L2(1)) / D
 
-        CALL MATMULT( LMatI,RSMat,3,3,3, 3,3,3,   LIR )
-*
+         LIR = matmul(LMatI,RSMat)
+
         ! ------------ Find f and g series at 1st and 3rd obs ---------
 *      speed by assuming circ sat vel for uDot here ??
 *      some similartities in 1/6t3t1 ...  
@@ -574,8 +521,8 @@ c        TUDay        =     0.00933809017716D0
         d2=  LIR(2,1)*a1u + LIR(2,3)*a3u
 
         ! ------- Solve eighth order poly NOT same as LAPLACE ---------
-        L2DotRS= DOT( L2,RS2 ) 
-        magrs2 = MAG(rs2)
+        L2DotRS= dot_product( L2,RS2 ) 
+        magrs2 = norm2(rs2)
         Poly( 1)=  1.0D0  ! r2^8th variable!!!!!!!!!!!!!!
         Poly( 2)=  0.0D0
         Poly( 3)=  -(D1*D1 + 2.0D0*D1*L2DotRS + magRS2**2)
@@ -615,13 +562,13 @@ c        TUDay        =     0.00933809017716D0
           CMat(1,1)= -c1
           CMat(2,1)= 1.0D0
           CMat(3,1)= -c3
-        CALL MATMULT( LIR,CMat,3,3,1, 3,3,1,  RhoMat )
+        RhoMat = MATMUl( LIR,CMat )
 
         Rhoold1=  RhoMat(1,1)/c1
         Rhoold2= -RhoMat(2,1)
         Rhoold3=  RhoMat(3,1)/c3
 
-*
+
       ! -------- Loop through the refining process ------------  for WHILE () DO
       DO ll= 1 , 3
             Write( *,*) ' Iteration # ',ll
@@ -642,13 +589,13 @@ c        TUDay        =     0.00933809017716D0
               ENDIF 
 
             CALL rv2coe( r2,v2, p,a,ecc,incl,omega,argp,Nu,m,u,l,ArgPer)
-            magr2 = MAG(r2)
+            magr2 = norm2(r2)
 
         IF ( ll .le. 2 ) THEN
             ! --- Now get an improved estimate of the f and g series --
 *       .or. can the analytic functions be found now??  
             u= Mu / ( magr2**3 )
-            rDot= DOT(r2,v2)/magr2
+            rDot= dot_product(r2,v2)/magr2
             uDot= (-3.0D0*Mu*RDot) / (magr2**4)
 
             TauSqr= Tau1*Tau1 
@@ -671,8 +618,8 @@ c        TUDay        =     0.00933809017716D0
             ! -------- Now use exact method to find f and g -----------
             CALL ANGLE( R1,R2, Theta )
             CALL ANGLE( R2,R3, Theta1 )
-            magr1 = MAG(r1)
-            magr3 = MAG(r3)
+            magr1 = norm2(r1)
+            magr3 = norm2(r3)
 
             f1= 1.0D0 - ( (magR1*(1.0D0 - DCOS(Theta)) / p ) )
             g1= ( magR1*magR2*DSIN(-theta) ) / DSQRT( p )  ! - ANGLE because backwards!!
@@ -686,7 +633,7 @@ c        TUDay        =     0.00933809017716D0
             CMat(1,1)= -c1
             CMat(2,1)= 1.0D0
             CMat(3,1)= -c3
-            CALL MATMULT( LIR,CMat,3,3,1, 3,3,1,  RhoMat )
+            RhoMat  = mATMUL( LIR,CMat)
 
             ! ----------------- Check for convergence -----------------
 
@@ -741,13 +688,12 @@ c        TUDay        =     0.00933809017716D0
         IMPLICIT NONE
         REAL*8 Rijk(3),Vijk(3),rr,RtAsc,Decl,DRr,DRtAsc,DDecl
         CHARACTER*4 Direction
-        EXTERNAL Dot, MAG
+
 * -----------------------------  Locals  ------------------------------
-        INTEGER Small
-        REAL*8 Temp, Temp1, Dot, MAG
+
+        REAL*8 Temp, Temp1
 
         ! --------------------  Implementation   ----------------------
-        Small        = 0.00000001D0
         IF ( Direction .eq. 'FROM' ) THEN
             Rijk(1)= rr*DCOS(Decl)*DCOS(RtAsc)
             Rijk(2)= rr*DCOS(Decl)*DSIN(RtAsc)
@@ -761,7 +707,7 @@ c        TUDay        =     0.00933809017716D0
             Vijk(3)= DRr*DSIN(Decl) + rr*DCOS(Decl)*DDecl
           ELSE
             ! ------------- Calculate Angles and Rates ----------------
-            rr = MAG(Rijk)
+            rr = norm2(Rijk)
             Temp= DSQRT( Rijk(1)*Rijk(1) + Rijk(2)*Rijk(2) )
             IF ( Temp .lt. Small ) THEN
                 RtAsc= DATAN2( Vijk(2), Vijk(1) )
@@ -771,7 +717,7 @@ c        TUDay        =     0.00933809017716D0
             Decl= DASIN( Rijk(3)/rr )
 
             Temp1= -Rijk(2)*Rijk(2) - Rijk(1)*Rijk(1)  ! different now
-            DRr= DOT(Rijk,Vijk)/rr 
+            DRr= dot_product(Rijk,Vijk)/rr 
             IF ( DABS(Temp1) .gt. Small ) THEN
                 DRtAsc= ( Vijk(1)*Rijk(2) - Vijk(2)*Rijk(1) ) / Temp1
               ELSE
@@ -817,27 +763,21 @@ c        TUDay        =     0.00933809017716D0
 *    Temp1       - Temporary REAL*8 value
 *    i           - Index
 *
-*  Coupling      :
-*    MAG         - Magnitude of a vector
-*    LNCOM2      - Linear combination of 2 vectors
-*    ADDVEC      - Add two vectors
-*    DOT         - DOT product of two vectors
-*
 *  References    :
 *    Vallado       2001, 248-250, Alg 26
 *
 * ------------------------------------------------------------------------------  
-*
+
       SUBROUTINE RV_TRADEC   ( Rijk,Vijk,RSecef, Direction, Rho,TRtAsc,
      &                         TDecl,DRho,DTRtAsc,DTDecl )
         IMPLICIT NONE
         REAL*8 Rijk(3),VIjk(3),RSecef(3),Rho,TRtAsc,TDecl,DRho,DTRtAsc,
-     &         DTDecl, MAG
+     &         DTDecl
         CHARACTER*4 Direction
-        EXTERNAL DOT, MAG
+
 * -----------------------------  Locals  ------------------------------
         INTEGER i
-        REAL*8 Small, temp, temp1, RhoV(3),DRhoV(3), Dot, Magrhov
+        REAL*8 Small, temp, temp1, RhoV(3),DRhoV(3), Magrhov
 
         ! --------------------  Implementation   ----------------------
         Small        = 0.00000001D0
@@ -856,21 +796,21 @@ c        TUDay        =     0.00933809017716D0
             DRhoV(3)= DRho*DSIN(TDecl) + Rho*DCOS(TDecl)*DTDecl
 
             ! ------ Find IJK range vector from SITE to satellite -----
-            CALL ADDVEC( RhoV,RSecef,  Rijk )
+            Rijk = RhoV + RSecef
             DO i=1,3
                 Vijk(i)= DRhoV(i)
               ENDDO
 
           ELSE
             ! ------ Find IJK range vector from SITE to satellite -----
-            CALL LNCOM2( 1.0D0,-1.0D0, Rijk,RSecef,  RhoV )
+            RhoV = 1.0D0*Rijk - 1.0D0*RSecef 
             DO i=1,3
                 DRhoV(i)= Vijk(i)  ! Same for topocentric
               ENDDO
-            magrhov = MAG(rhoV)
+            magrhov = norm2(rhoV)
 
             ! ------- Calculate Topocentric ANGLE and Rate Values -----
-            Rho= MAG(Rhov)
+            Rho= norm2(Rhov)
             Temp= DSQRT( RhoV(1)*RhoV(1) + RhoV(2)*RhoV(2) )
             IF ( Temp .lt. Small ) THEN
                 TRtAsc= DATAN2( DRhoV(2), DRhoV(1) )
@@ -881,7 +821,7 @@ c        TUDay        =     0.00933809017716D0
             TDecl= DASIN( RhoV(3)/magRhoV )
 
             Temp1= -RhoV(2)*RhoV(2) - RhoV(1)*RhoV(1)  ! different now
-            DRho= DOT(RhoV,DRhoV)/Rho
+            DRho= dot_product(RhoV,DRhoV)/Rho
             IF ( DABS(Temp1) .gt. Small ) THEN
                 DTRtAsc= ( DRhoV(1)*RhoV(2) - DRhoV(2)*RhoV(1) ) / Temp1
               ELSE
@@ -937,15 +877,11 @@ c        TUDay        =     0.00933809017716D0
 *    i           - Index
 *
 *  Coupling      :
-*    MAG         - Magnitude of a vector
-*    ADDVEC      - Add two vectors
 *    CROSS       - CROSS product of two vectors
 *    ROT3        - Rotation about the 3rd axis
 *    ROT2        - Rotation about the 2nd axis
-*    DOT         - DOT product of two vectors
 *    RVSEZ_RAZEL - Find R and V from SITE in Topocentric Horizon (SEZ) system
-*    LNCOM2      - Combine two vectors and constants
-*
+
 *  References    :
 *    Vallado       2001, 250-255, Alg 27
 *
@@ -959,16 +895,15 @@ c        TUDay        =     0.00933809017716D0
      &         TTT,jdut1,lod,xp,yp
         INTEGER terms
         CHARACTER*4 Direction
-        EXTERNAL Dot, MAG
 * -----------------------------  Locals  ------------------------------
         REAL*8 Temp, Temp1, Rhoecef(3), magrhosez, RSecef(3),VSecef(3),
      &         DRhoecef(3), Rhosez(3), DRhosez(3), WCrossR(3),
-     &         TempVec, Dot, MAG, Lat,
+     &         TempVec(3), Lat,
      &         recef(3), vecef(3)
         INTEGER i
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         CALL SITE ( Latgd,Alt,Lon, RSecef,VSecef )
@@ -985,7 +920,7 @@ c        TUDay        =     0.00933809017716D0
             CALL ROT3( TempVec,   -Lon   , vecef )
 
             ! -----------  Find range and velocity vectors ------------
-            CALL ADDVEC( Rhoecef,RSecef,Recef )
+            Recef  = Rhoecef + RSecef
 
             CALL GCRF_ITRF ( reci,veci, 'FROM', rECEF,vECEF,
      &                      TTT, JDUT1, LOD, xp, yp, terms )
@@ -996,8 +931,8 @@ c        TUDay        =     0.00933809017716D0
      &                      TTT, JDUT1, LOD, xp, yp, terms )
 
             ! ----- find ecef range vector from site to satellite -----
-            CALL SUBVEC( recef, rsecef,  rhoecef)
-            rho = mag(rhoecef)
+             rhoecef = recef-rsecef
+            rho = norm2(rhoecef)
 
             ! ----------- Convert to SEZ for calculations -------------
             CALL ROT3( Rhoecef,    Lon   ,  TempVec )
@@ -1016,12 +951,12 @@ c        TUDay        =     0.00933809017716D0
             IF ( ( Temp .lt. Small ) ) THEN   ! directly over the north pole
                 El= DSIGN(1.0D0, Rhosez(3))*HalfPi ! +- 90
               ELSE
-                magrhosez = MAG(rhosez)
+                magrhosez = norm2(rhosez)
                 El= DASIN( Rhosez(3) / magRhosez )
               ENDIF
 
             ! ---- Calculate Range, Azimuth and Elevation rates -------
-            DRho= DOT(Rhosez,DRhosez)/Rho
+            DRho= dot_product(Rhosez,DRhosez)/Rho
             IF ( DABS( Temp*Temp ) .gt. Small ) THEN
                 DAz= ( DRhosez(1)*Rhosez(2) - DRhosez(2)*Rhosez(1) ) /
      &                 ( Temp*Temp )
@@ -1083,12 +1018,12 @@ c        TUDay        =     0.00933809017716D0
         IMPLICIT NONE
         REAL*8 Rijk(3), Vijk(3), rr,EclLat,EclLon,DRr,DEclLat,DEclLon
         CHARACTER*4 Direction
-        EXTERNAL DOT, MAG
+
 * -----------------------------  Locals  ------------------------------
-        REAL*8 Dot, Small, Re(3), Ve(3), Obliquity, Temp, Temp1, Mag
+        REAL*8 Re(3), Ve(3), Obliquity, Temp, Temp1
 
         ! --------------------  Implementation   ----------------------
-        Small    = 0.00000001D0
+
         Obliquity= 0.40909280D0  !23.439291D0/rad
         IF ( Direction .eq. 'FROM' ) THEN
             Re(1)= rr*DCOS(EclLat)*DCOS(EclLon)
@@ -1110,7 +1045,7 @@ c        TUDay        =     0.00933809017716D0
             CALL ROT1( Vijk, Obliquity, Ve )
 
             ! ------------- Calculate Angles and Rates ----------------
-            rr= MAG(Re)
+            rr= norm2(Re)
             Temp= DSQRT( Re(1)*Re(1) + Re(2)*Re(2) )
             IF ( Temp .lt. Small ) THEN
                 Temp1= DSQRT( Ve(1)*Ve(1) + Ve(2)*Ve(2) )
@@ -1125,7 +1060,7 @@ c        TUDay        =     0.00933809017716D0
             EclLat= DASIN( Re(3)/rr )
 
             Temp1= -Re(2)*Re(2) - Re(1)*Re(1)  ! different now
-            DRr= DOT(re,Ve)/rr
+            DRr= dot_product(re,Ve)/rr
             IF ( DABS( Temp1 ) .gt. Small ) THEN
                 DEclLon= ( Ve(1)*Re(2) - Ve(2)*Re(1) ) / Temp1
               ELSE
@@ -1184,13 +1119,10 @@ c        TUDay        =     0.00933809017716D0
      &           DRho,DAz,DEl )
         IMPLICIT NONE
         CHARACTER*4 Direction
-        REAL*8 RhoSez(3), DRhoSez(3),Rho,Az,El,DRho,DAz, DEl, MAG
-        EXTERNAL Dot, MAG
-
-        INCLUDE 'astmath.cmn'
+        REAL*8 RhoSez(3), DRhoSez(3),Rho,Az,El,DRho,DAz, DEl
 
 * -----------------------------  Locals  ------------------------------
-        REAL*8 Temp1, Temp, SinEl, CosEl, SinAz,CosAz, Dot, magrhosez
+        REAL*8 Temp1, Temp, SinEl, CosEl, SinAz,CosAz,  magrhosez
 
         ! --------------------  Implementation   ----------------------
         IF ( Direction .eq. 'FROM' ) THEN
@@ -1238,7 +1170,7 @@ c        TUDay        =     0.00933809017716D0
               ENDIF
 
             ! -----  Calculate Range, Azimuth and Elevation rates -----
-            DRho= DOT(Rhosez,DRhosez)/Rho 
+            DRho= dot_product(Rhosez,DRhosez)/Rho 
             IF ( DABS( Temp*Temp ) .gt. Small ) THEN
                 DAz= ( DRhosez(1)*Rhosez(2) - DRhosez(2)*Rhosez(1) ) /
      &                 ( Temp*Temp )
@@ -1425,12 +1357,7 @@ c        TUDay        =     0.00933809017716D0
 *    i           - index
 *
 *  Coupling      :
-*    MAG         - Magnitude of a vector
 *    CROSS       - CALL CROSS product of two vectors
-*    DOT         - DOT product of two vectors
-*    ADD3VEC     - Add three vectors
-*    LNCOM2      - Multiply two vectors by two constants
-*    LNCOM3      - Add three vectors each multiplied by a constant
 *    NORM        - Creates a Unit Vector
 *    ANGLE       - ANGLE between two vectors
 *
@@ -1438,28 +1365,28 @@ c        TUDay        =     0.00933809017716D0
 *    Vallado       2001, 432-445, Alg 52, Ex 7-5
 *
 * ------------------------------------------------------------------------------  
-*
+
       SUBROUTINE GIBBS       ( R1,R2,R3, V2, Theta,Theta1,Copa, Error )
         IMPLICIT NONE
         REAL*8 R1(3), R2(3), R3(3), V2(3), Theta, Theta1, Copa
         CHARACTER*12 Error
-        EXTERNAL DOT, MAG
+
 * -----------------------------  Locals  ------------------------------
         INTEGER i
         REAL*8 tover2, l, Small, r1mr2, r3mr1, r2mr3, p(3), q(3), w(3),
-     &         d(3), n(3), s(3), b(3), Pn(3), R1N(3), Dn(3), Nn(3),Dot,
-     &         magr1, magr2, magr3, mag, magd, magn
+     &         d(3), n(3), s(3), b(3), Pn(3), R1N(3), Dn(3), Nn(3),
+     &         magr1, magr2, magr3, magd, magn
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         Small= 0.000001D0
         Theta= 0.0D0
         Error = 'ok'
         Theta1= 0.0D0
-        magr1 = MAG( R1 )
-        magr2 = MAG( R2 )
-        magr3 = MAG( R3 )
+        magr1 = norm2( R1 )
+        magr2 = norm2( R2 )
+        magr3 = norm2( R3 )
         DO i= 1 , 3
             V2(i)= 0.0D0
           ENDDO
@@ -1469,26 +1396,26 @@ c        TUDay        =     0.00933809017716D0
         CALL CROSS( R1,R2,W )
         CALL NORM( P,Pn )
         CALL NORM( R1,R1N )
-        Copa=  DASIN( DOT( Pn,R1n ) ) 
+        Copa=  DASIN( dot_product( Pn,R1n ) ) 
 
-        IF ( DABS( DOT(R1N,Pn) ) .gt. 0.017452406D0 ) THEN
+        IF ( DABS( dot_product(R1N,Pn) ) .gt. 0.017452406D0 ) THEN
             Error= 'not coplanar'
           ENDIF
 
         ! --------------- .or. don't contiNue processing --------------
-        CALL ADD3VEC( P,Q,W,D )
-        CALL LNCOM3( magr1,magr2,magr3,P,Q,W,N )
+        D = P+Q+W
+        N = magr1*P + magr2*Q + magr3*W 
         CALL NORM( N,Nn )
         CALL NORM( D,DN )
-        magd = MAG(d)
-        magn = MAG(n)
+        magd = norm2(d)
+        magn = norm2(n)
 
         ! -------------------------------------------------------------
 *       Determine If  the orbit is possible.  Both D and N must be in
 *         the same direction, and non-zero.
         ! -------------------------------------------------------------
         IF ( ( DABS(magd).lt.Small ) .or. ( DABS(magn).lt.Small ) .or.
-     &      ( DOT(Nn,dn) .lt. Small ) ) THEN
+     &      ( dot_product(Nn,dn) .lt. Small ) ) THEN
             Error= 'impossible'
           ELSE
               CALL ANGLE( R1,R2, Theta )
@@ -1502,12 +1429,12 @@ c        TUDay        =     0.00933809017716D0
               CALL CROSS( d,r2,b )
               L    = DSQRT( mu / (magd*magn) )
               Tover2= L / magr2
-              CALL LNCOM2(Tover2,L,B,S,V2)
+              V2 = Tover2*B + L*S
             ENDIF
 
-      RETURN
+
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE HERRGIBBS
@@ -1557,28 +1484,28 @@ c        TUDay        =     0.00933809017716D0
 *    Vallado       2001, 439-445, Alg 52, Ex 7-4
 *
 * ------------------------------------------------------------------------------  
-*
+
       SUBROUTINE HERRGIBBS   ( R1,R2,R3,JD1,JD2,JD3, V2, Theta,Theta1,
      &                         Copa, Error )
         IMPLICIT NONE
         REAL*8 R1(3), R2(3), R3(3), JD1, JD2, JD3, V2(3), Theta,
      &         Theta1, Copa
         CHARACTER*12 Error
-        EXTERNAL Dot
+
 * -----------------------------  Locals  ------------------------------
         INTEGER i
         REAL*8 p(3), Pn(3), R1n(3),Dot, magr1, magr2, magr3,
-     &         Dt21, Dt31, Dt32, Term1, Term2, Term3, TolAngle, mag
+     &         Dt21, Dt31, Dt32, Term1, Term2, Term3, TolAngle
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         Error =  'ok'
         Theta = 0.0D0
         Theta1= 0.0D0
-        magr1 = MAG( R1 )
-        magr2 = MAG( R2 )
-        magr3 = MAG( R3 )
+        magr1 = norm2( R1 )
+        magr2 = norm2( R2 )
+        magr3 = norm2( R3 )
         DO i= 1 , 3
             V2(i)= 0.0D0
           ENDDO
@@ -1590,8 +1517,8 @@ c        TUDay        =     0.00933809017716D0
         CALL CROSS( R2,R3,P )
         CALL NORM( P,Pn )
         CALL NORM( R1,R1N )
-        Copa=  DASIN( DOT( Pn,R1n ) )
-        IF ( DABS( DOT(R1N,Pn) ) .gt. 0.017452406D0 ) THEN
+        Copa=  ASIN( dot_product( Pn,R1n ) )
+        IF ( ABS( dot_product(R1N,Pn) ) .gt. 0.017452406D0 ) THEN
             Error= 'not coplanar'
           ENDIF
 
@@ -1617,7 +1544,7 @@ c        TUDay        =     0.00933809017716D0
 
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE LAMBERTUNIV
@@ -1677,8 +1604,8 @@ c        TUDay        =     0.00933809017716D0
         CHARACTER*12 Error
         EXTERNAL DOT, MAG
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
 * -----------------------------  Locals  ------------------------------
         INTEGER i, Loops, YNegKtr, NumIter
@@ -1690,14 +1617,14 @@ c        TUDay        =     0.00933809017716D0
         NumIter= 40
         Error  = 'ok' 
         PsiNew = 0.0D0 
-        magro = MAG(ro)
-        magr = MAG(r)
+        magro = norm2(ro)
+        magr = norm2(r)
         DO i= 1 , 3
             vo(i)= 0.0D0
             v(i)= 0.0D0
           ENDDO
 
-        CosDeltaNu= DOT(ro,r)/(magro*magr)
+        CosDeltaNu= dot_product(ro,r)/(magro*magr)
         IF ( Dm .eq. 'L' ) THEN
             VarA = -DSQRT( magro*magr*(1.0D0+CosDeltaNu) )
           ELSE
@@ -1811,11 +1738,12 @@ c               write(20,'(4f14.6)') y,xold,dtnew,psinew
 *
 * --------- Two recursion algorithms needed by the LambertBattin routine
 *
-      REAL*8 FUNCTION SEE    ( v )
-        IMPLICIT NONE
-        REAL*8 v
+      pure REAL(wp) FUNCTION SEE    ( v )
+
+        REAL(wp), intent(in) :: v
 * -----------------------------  Locals  ------------------------------
-        REAL*8 c(0:20),term, termold, del, delold, sum1, eta, SQRTopv
+        REAL(wp) :: c(0:20),term, termold, del, delold, sum1,
+     &     eta, SQRTopv
         INTEGER i
 
         ! --------------------  Implementation   ----------------------
@@ -1861,15 +1789,15 @@ c          See= (1.0D0 / (8.0D0*(1.0D0+SQRTOpv))) *
 c     &         ( 3.0D0 + Sum1 / ( 1.0D0+eta*sum1 ) )
           See= 1.0D0 / ((1.0D0/(8.0D0*(1.0D0+sqrtopv))) *
      &         ( 3.0D0 + sum1 / ( 1.0D0+eta*sum1 ) ) )
-      RETURN
-      END   ! Internal FUNCTION See
+
+      END  FUNCTION See
 
 
-      REAL*8 FUNCTION k      ( v )
-        IMPLICIT NONE
-        REAL*8 v
+      pure REAL(wp) FUNCTION k( v )
+
+        REAL(wp), intent(IN) :: v
 * -----------------------------  Locals  ------------------------------
-        REAL*8 d(0:20), del,delold,term,termold, sum1
+        REAL(wp) :: d(0:20), del,delold,term,termold, sum1
         INTEGER i
 
         ! --------------------  Implementation   ----------------------
@@ -1910,9 +1838,9 @@ c     &         ( 3.0D0 + Sum1 / ( 1.0D0+eta*sum1 ) )
             ENDDO
 
           k= Sum1
-      RETURN
-      END  ! Internal SUBROUTINE K
-*
+
+      END function K
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE LAMBERBATTIN
@@ -1979,12 +1907,6 @@ c     &         ( 3.0D0 + Sum1 / ( 1.0D0+eta*sum1 ) )
 *    DE          -
 *    DH          -
 *
-*  Coupling      :
-*    MAG         - Magnitude of a vector
-*    ASINH     - Inverse hyperbolic sine
-*    ARCCOSH     - Inverse hyperbolic cosine
-*    SINH        - Hyperbolic sine
-*
 *  References    :
 *    Vallado       2001, 464-467, Ex 7-5
 *
@@ -1995,26 +1917,26 @@ c     &         ( 3.0D0 + Sum1 / ( 1.0D0+eta*sum1 ) )
         REAL*8 Ro(3), r(3), Dtsec, Vo(3),v(3)
         CHARACTER Dm, OverRev
         CHARACTER*12 Error
-        EXTERNAL Dot, See, K, ASINH, MAG
+
 * -----------------------------  Locals  ------------------------------
         INTEGER i, Loops
-        REAL*8 RCrossR(3),Dot, See, K, ASINH, MAG,
+        REAL*8 RCrossR(3),  
 *         lambda,bigt,     testamt,
      &   u, b, Sinv,Cosv, rp, x, xn, y, l, m, CosDeltaNu, SinDeltaNu,
      &   DNu, a, tan2w, RoR, h1, h2, tempx, eps, denom, chord, k2, s,
      &   f, g, am, ae, be, tm, gDot, arg1, arg2, AlpE, BetE,
      &   AlpH, BetH, DE, DH, magr, magro, magrcrossr,y1, lim1
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         Error = 'ok'
-        magr = MAG(r)
-        magro = MAG(ro)
-        CosDeltaNu= DOT(ro,r)/(magro*magr)
+        magr = norm2(r)
+        magro = norm2(ro)
+        CosDeltaNu= dot_product(ro,r)/(magro*magr)
         CALL CROSS( ro,r, RCrossR )
-        magrcrossr = MAG(rcrossr)
+        magrcrossr = norm2(rcrossr)
         SinDeltaNu= magRCrossr/(magro*magr)
         DNu   = DATAN2( SinDeltaNu,CosDeltaNu )
 
@@ -2172,8 +2094,7 @@ c     &         ( 3.0D0 + Sum1 / ( 1.0D0+eta*sum1 ) )
 *  Coupling      :
 *    KEPLER      - Find R and V at future time
 *    LAMBERTUNIV - Find velocity vectors at each ENDIF of transfer
-*    LNCOM2      - Linear combination of two vectors and constants
-*
+
 *  References    :
 *    Vallado       2001, 468-474, Alg 58
 *
@@ -2204,8 +2125,8 @@ c     &         ( 3.0D0 + Sum1 / ( 1.0D0+eta*sum1 ) )
             CALL LAMBERTUNIV( RInt,R1Tgt,dm,'N',Dtsec,  V1t,V2t,Error )
 
             IF ( Error .eq. 'ok' ) THEN
-                CALL LNCOM2( -1.0D0, 1.0D0,VInt, V1t,  DV1 )
-                CALL LNCOM2(  1.0D0,-1.0D0,V1Tgt,V2t,  DV2 )
+                DV1 = -1.0D0*VInt + 1.0D0*V1t
+                DV2 = 1.0D0*V1Tgt - 1.0D0*V2t
               ELSE
                 DO i= 1 , 3
                     V1t(i)= 0.0D0
@@ -2217,4 +2138,4 @@ c     &         ( 3.0D0 + Sum1 / ( 1.0D0+eta*sum1 ) )
           ENDIF 
       RETURN
       END
-*
+      end module astiod

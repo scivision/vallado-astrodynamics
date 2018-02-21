@@ -1,8 +1,13 @@
-*
-*   -------------------------------------------------------------------
-*
-*                              ASTREDUC.FOR
-*
+      module astreduc
+      use astmath
+      use asttime
+      implicit none      
+
+        INTEGER IAR80(5,106)
+        REAL*8  RAr80(4,106)
+
+
+ 
 *   This file contains Astrodynamic subroutines and functions to
 *   implement reduction calculations. These routines are described in Ch3.
 *
@@ -38,62 +43,15 @@
 *
 *     *****************************************************************
 *
-*     Uses object files:
-*       astutil,
-*       astmath,
-*       asttime
-*     Uses common files:
-*       astmath.cmn
-*       astreduc.cmn
-*
+
 *
 *  The routines for this module are listed below. They are broken into 
 *  distinct areas. Notice that the arguments for the conversion routines
 *  include the YMD HMS in UTC, while the analysis routines input the TTDB
 *  term. This is intended to facilitate both functions. The CONVTIME routine
 *  is used to aid in the conversion of time for any analysis functions.
-*
 
-*  ------------------- Conversion of coordinates -----------------------
-*      SUBROUTINE InitReduc   ( FileN1 )
-*
-*
-*      SUBROUTINE GCRF_ITRF     ( rj2000,vj2000, Direction, rITRF,vITRF,
-*     &                        TTT, JDUT1, LOD, xp, yp, terms )
-*
-*      SUBROUTINE FK4         ( rJ2000, vJ2000, Direction, rFK4, vFK4 )
-*
-*  ------------ Individual routines for testing and analysis -----------
-*
-*      SUBROUTINE Precession  ( TTT, Prec )
-*
-*      SUBROUTINE GCRF_MOD    ( rJ2000, vJ2000, Direction, rMOD, vMOD,
-*     &                         TTT )
-*
-*      SUBROUTINE Nutation    ( TTT,
-*     &                         DeltaPsi, TrueEps, MeanEps, Omega, Nut )
-*
-*      SUBROUTINE GCRF_TOD    ( rj2000, vj2000, Direction, rTOD, vTOD,
-*     &                         TTT )
-*
-*      SUBROUTINE SIDEREAL    ( JDUT1,DeltaPsi,MeanEps,Omega,LOD,
-*     &                         ST,STDot,OmegaEarth,terms )
-*
-*      SUBROUTINE GCRF_PEF    ( rj2000, vj2000, Direction, rPEF, vPEF,
-*     &                         TTT, JDUT1, LOD, terms )
-*
-*      SUBROUTINE POLARM      ( xp, yp,  PM )
-*
-*
-*      SUBROUTINE TrueMean    ( Order, TTT, Terms, Nutteme )
-*
-*
-*      SUBROUTINE GCRF_TEME   ( rMOD, vMOD, Direction, rTM, vTM,
-*     &                         order, TTT, Terms )
-*
-*
-
-*
+      contains
 * ----------------------------------------------------------------------------
 *
 *                           SUBROUTINE INITREDUC
@@ -136,7 +94,7 @@ c     &                         RAr80, IAr96, RAr96, pIAr96, pRAr96 )
 c       INTEGER IAr00(5,106), IAr96(5,263), pIAr96(10,112)
 c       REAL*8  RAr00(4,106), RAr96(4,263), pRAr96(4,112)
 
-        INCLUDE 'astreduc.cmn'
+        
 
 * ----------------------------  Locals  -------------------------------
        INTEGER i
@@ -331,7 +289,7 @@ c
         REAL*8 coszeta, sinzeta, costheta, sintheta, cosz, sinz
 
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------- PRECESSION angles ---------------------
         TTT2= TTT * TTT
@@ -418,12 +376,12 @@ c
 
         ! ------------------- Perform matrix mmpy ---------------------
         IF ( Direction .eq. 'TOO ' ) THEN
-            CALL MATMULT     ( Prec, rJ2000, 3,3,1,3,3,3, rmod )
-            CALL MATMULT     ( Prec, vJ2000, 3,3,1,3,3,3, vmod )
+            rmod=MATMUL( Prec, rJ2000)
+            vmod = MATMUL( Prec, vJ2000)
           ELSE
-            CALL MATTRANS( prec, 3,3, 3,3, tmt )
-            CALL MATMULT     ( tmt, rmod  , 3,3,1,3,3,3, rj2000 )
-            CALL MATMULT     ( tmt, vmod  , 3,3,1,3,3,3, vj2000 )
+            tmt = transpose( prec )
+            rj2000 =MATMUL( tmt, rmod)
+            vj2000=MATMUL ( tmt, vmod )
           ENDIF
 
 c       ! --------------------- Perform rotations ---------------------
@@ -488,8 +446,8 @@ c          ENDIF
         REAL*8  Omega,
      &          DeltaPsi, TrueEps, TTT, Nut(3,3),meaneps
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astreduc.cmn'
+        
+        
 
 * ----------------------------  Locals  -------------------------------
         INTEGER i
@@ -620,7 +578,7 @@ c        Omega=  125.0445222 - (   5*rr  + 134.1362608)*TTT + 0.0020708 *TTT2 + 
         CHARACTER*4 Direction
         REAL*8 rj2000(3),vj2000(3),rtod(3),vtod(3), TTT
 
-        INCLUDE 'astreduc.cmn'
+        
 
 * ----------------------------  Locals  -------------------------------
         REAL*8  meaneps,omega,DeltaPsi, TrueEps,Prec(3,3),Nut(3,3),
@@ -632,14 +590,14 @@ c        Omega=  125.0445222 - (   5*rr  + 134.1362608)*TTT + 0.0020708 *TTT2 + 
         CALL nutation( ttt,  deltapsi,trueeps,meaneps,omega,nut)
 
         ! ------------------- Perform matrix mmpy ---------------------
-        CALL MATMULT     ( Nut , Prec  , 3,3,3,3,3,3, tm )
+        tm=MATMUL( Nut , Prec )
         IF ( Direction .eq. 'TOO ' ) THEN
-            CALL MATMULT     ( tm  , rJ2000, 3,3,1,3,3,3, rtod )
-            CALL MATMULT     ( tm  , vJ2000, 3,3,1,3,3,3, vtod )
+            rtod= MATMUL( tm  , rJ2000 )
+            vtod= MATMUL( tm  , vJ2000 )
           ELSE
-            CALL MATTRANS( tm, 3,3, 3,3, tmt )
-            CALL MATMULT     ( tmt , rtod  , 3,3,1,3,3,3, rj2000 )
-            CALL MATMULT     ( tmt , vtod  , 3,3,1,3,3,3, vj2000 )
+            tmt = transpose( tm )
+            rj2000=MATMUL( tmt , rtod  )
+             vj2000= MATMUL( tmt , vtod )
           ENDIF
 
 c        ! --------------------- Perform rotations ---------------------
@@ -712,7 +670,7 @@ c          ENDIF
 * ----------------------------  Locals  -------------------------------
         REAL*8 GST, AST, Conv1, meaneps
 
-        INCLUDE 'astmath.cmn'
+        
 
         OmegaEarth(1) = 0.0D0
         OmegaEarth(2) = 0.0D0
@@ -820,7 +778,7 @@ c          ENDIF
         INTEGER Terms
         EXTERNAL GSTIME
 
-        INCLUDE 'astreduc.cmn'
+        
 
 * ----------------------------  Locals  -------------------------------
         REAL*8 ttt,meaneps,omegaearth(3),wcrossr(3),
@@ -837,19 +795,19 @@ c          ENDIF
      &                 OmegaEarth,terms )
 
         ! ------------------- Perform matrix mmpy ---------------------
-        CALL MATMULT     ( Nut , Prec  , 3,3,3,3,3,3, tm1 )
-        CALL MATMULT     ( St  , tm1    , 3,3,3,3,3,3, tm )
+        tm1=MATMUL( Nut , Prec )
+        tm= MATMUL( St  , tm1 )
         IF ( Direction .eq. 'TOO ' ) THEN
-            CALL MATMULT     ( tm  , rJ2000, 3,3,1,3,3,3, rPEF )
-            CALL MATMULT     ( tm  , vJ2000, 3,3,1,3,3,3, vPEF )
+            rPEF= MATMUL( tm  , rJ2000 )
+            vPEF= MATMUL( tm  , vJ2000 )
             CALL CROSS( OmegaEarth,rPEF,  wcrossr )
-            CALL SUBVEC( vPEF, wcrossr,  vPEF )
+            vPEF = vPEF- wcrossr
           ELSE
             CALL MATTRANS( tm, 3,3, 3,3, tmt )
-            CALL MATMULT     ( tmt , rPEF  , 3,3,1,3,3,3, rj2000 )
+            rj2000=MATMUL ( tmt , rPEF )
             CALL CROSS( OmegaEarth,rPEF,  wcrossr )
-            CALL ADDVEC( vPEF, wcrossr,  vPEF )
-            CALL MATMULT     ( tmt , vPEF  , 3,3,1,3,3,3, vj2000 )
+            vPEF= vPEF+ wcrossr
+            vj2000= MATMUL( tmt , vPEF  )
           ENDIF
 
 c       ! --------------------- Perform rotations ---------------------
@@ -1002,7 +960,7 @@ c       pm(3,3) =  1.0
      &         TTT, Jdut1, LOD
         INTEGER terms
 
-        INCLUDE 'astreduc.cmn'
+        
 
 * ----------------------------  Locals  -------------------------------
         REAL*8 Deltapsi,meaneps,trueeps,omega,
@@ -1020,20 +978,20 @@ c       pm(3,3) =  1.0
         CALL polarm(xp,yp, pm)
 
         ! ------------------- Perform matrix mmpy ---------------------
-        CALL MATMULT     ( Nut , Prec  , 3,3,3,3,3,3, tm1  )
-        CALL MATMULT     ( St  , tm1    , 3,3,3,3,3,3, tm  )
+        tm1= MATMUL ( Nut , Prec  )
+        tm=MATMUL ( St  , tm1  )
         IF ( Direction .eq. 'TOO ' ) THEN
-            CALL MATMULT     ( tm  , rJ2000, 3,3,1,3,3,3, rPEF  )
-            CALL MATMULT     ( pm  , rPEF  , 3,3,1,3,3,3, ritrf )
+            rPEF=MATMUL( tm  , rJ2000  )
+            ritrf=MATMUL( pm  , rPEF )
 
-            CALL MATMULT     ( tm  , vJ2000, 3,3,1,3,3,3, vPEF  )
+             vPEF = MATMUL( tm  , vJ2000 )
             CALL CROSS       ( omegaearth, rPEF, wcrossr )
-            CALL SUBVEC      ( vPEF, wcrossr, vPEF )
-            CALL MATMULT     ( pm  , vPEF  , 3,3,1,3,3,3, vitrf )
+            vPEF= vPEF- wcrossr
+           vitrf=MATMUL( pm  , vPEF )
           ELSE
             CALL MATTRANS( tm, 3,3, 3,3, tmt )
-            CALL MATMULT     ( tmt , ritrf  , 3,3,1,3,3,3, rj2000 )
-            CALL MATMULT     ( tmt , vitrf  , 3,3,1,3,3,3, vj2000 )
+            rj2000 = MATMUL ( tmt , ritrf)
+             vj2000= MATMUL( tmt , vitrf )
           ENDIF
 
 chk these accel
@@ -1109,8 +1067,8 @@ c          ENDIF
         REAL*8  TTT, Nutteme(3,3)
         INTEGER Order, Terms
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astreduc.cmn'
+        
+        
 
 * ----------------------------  Locals  -------------------------------
         INTEGER ii, i
@@ -1264,7 +1222,7 @@ c          ENDIF
         REAL*8 rj2000(3), vj2000(3), rTM(3), vTM(3), TTT
         INTEGER Order, Terms
 
-        INCLUDE 'astreduc.cmn'
+        
 
 * ----------------------------  Locals  -------------------------------
         REAL*8  nutteme(3,3), tmt(3,3)
@@ -1303,5 +1261,5 @@ c     &              Deltaeps*vtm(2)
 c         ENDIF
 
       RETURN
-      END   ! Subroutine GCRF_TEME
-
+      END Subroutine GCRF_TEME
+      end module astreduc

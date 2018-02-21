@@ -1,12 +1,11 @@
       module astmath
+      use, intrinsic:: ieee_arithmetic
       use, intrinsic:: iso_fortran_env, only: wp=>real64
+      use comm
       implicit none
       
       contains
-*   -------------------------------------------------------------------
-*
-*                              ASTMATH.FOR
-*
+
 *    this file contains miscellaneous math functions.
 *
 *                            companion code for
@@ -31,83 +30,7 @@
 *              23 Nov 87  David Vallado
 *                           Original baseline
 *
-*      -------------------------- Misc Operations ---------------------
-*
-*      REAL*8 FUNCTION FACTORIAL( x )
-*
-*      REAL*8 FUNCTION BINOMIAL ( i,j )
-*
-*      SUBROUTINE PLANE         ( x1,y1,z1,x2,y2,z2,x3,y3,z3, a,b,c,d )
-*
-*      --------------------  Trigonometric Functions  -----------------
-*
-*      REAL*8 FUNCTION DCOT   ( XVal )
-*
-*      REAL*8 FUNCTION ATANH  ( XVal )
-*
-*      ----------------------- Vector Operations ----------------------
-*
-*      REAL*8 FUNCTION DOT    ( Vec1,Vec2 )
-*
-*      SUBROUTINE CROSS       ( Vec1,Vec2, OutVec )
-*
-*      REAL*8 FUNCTION mag    ( Vec )
-*
-*      SUBROUTINE NORM        ( Vec, OutVec )
-*
-*      SUBROUTINE ROT1        ( Vec, XVal, OutVec )
-*
-*      SUBROUTINE ROT2        ( Vec, XVal, OutVec )
-*
-*      SUBROUTINE ROT3        ( Vec, XVal, OutVec )
-*
-*      SUBROUTINE ROT1MAT     ( XVal, OutMat )
-*
-*      SUBROUTINE ROT2MAT     ( XVal, OutMat )
-*
-*      SUBROUTINE ROT3MAT     ( XVal, OutMat )
-*
-*      SUBROUTINE ANGLE       ( Vec1,Vec2, Theta )
-*
-*      ----------------------- Polynomial routines --------------------
-*
-*      SUBROUTINE POLYFIT     ( Degree,NumPts,DataPoints,Coeff,
-*                               MaxR,MaxDeg,MinX,MinY )
-*
-*      SUBROUTINE DMulRSub    ( ALPR,ALPI,BETR,BETI )
-*
-*      SUBROUTINE FACTOR      ( Poly, NRootS, RootS )
-*
-*      SUBROUTINE QUADRATIC   ( a,b,c, R1r,R1i,R2r,R2i )
-*
-*      SUBROUTINE CUBIC       ( a,b,c,d, R1r,R1i,R2r,R2i,R3r,R3i )
-*
-*      SUBROUTINE QUARTIC     ( a,b,c,d,e, R1r,R1i,R2r,R2i,
-*
-*      ------------------------- Misc functions -----------------------
-*      SUBROUTINE MATTRANS    ( Mat1, Mat1r,Mat1c,Max1r,Max1c, Mat2 )
-*
-*      SUBROUTINE MAKEMAT     ( Angl, Numbr, Matr )
-*
-*      SUBROUTINE LUDeComp    ( LU, Index, Order, MaxRow )
-*
-*      SUBROUTINE LUBkSub     ( LU, Index, Order, B, MaxRow )
-*
-*      SUBROUTINE MATINVERSE  ( Mat, Order, MaxRow, MatInv )
-*
-*      SUBROUTINE WRITEMAT    ( Mat1, Mat1r,Mat1c,Max1r,Max1c,DecNum,Title )
-*
-*      SUBROUTINE READMAT     ( Mat1, Mat1r,Mat1c,Max1r,Max1c )
-*
-*      SUBROUTINE FILEWRITEMAT( Mat1, Mat1r,Mat1c,Max1r,Max1c,Title )
-*
-*      SUBROUTINE FILEEXPWRITEMAT ( Mat1,Mat1r,Mat1c,Max1r,Max1c,Title )
-*
-*      REAL*8 FUNCTION DETERMINANT( Mat1, Order )
-*
-*
-* ------------------------------------------------------------------------------
-*
+
 *                           FUNCTION FACTORIAL
 *
 *  this function finds the value of a FACTORIAL.
@@ -320,8 +243,6 @@
         REAL*8 MagVec
         INTEGER i
 
-        INCLUDE 'astmath.cmn'
-
         ! --------------------  Implementation   ----------------------
         MagVec = norm2( Vec )
         IF ( MagVec .gt. Small ) THEN
@@ -336,7 +257,7 @@
 
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE ROTi
@@ -380,21 +301,22 @@
       END
 
 
-      SUBROUTINE ROT2        ( Vec, XVal, OutVec )
-        IMPLICIT NONE
-        REAL*8 Vec(3), XVal, OutVec(3)
+      pure SUBROUTINE ROT2        ( Vec, XVal, OutVec )
+
+        REAL(wp), intent(in) :: Vec(3), XVal
+        real(wp), intent(out) :: OutVec(3)
 * -----------------------------  Locals  ------------------------------
         REAL*8 c, s, Temp
 
         ! --------------------  Implementation   ----------------------
         Temp= Vec(3)
-        c= DCOS( XVal )
-        s= DSIN( XVal )
+        c= COS( XVal )
+        s= SIN( XVal )
 
         OutVec(3)= c*Vec(3) + s*Vec(1)
         OutVec(1)= c*Vec(1) - s*Temp
         OutVec(2)= Vec(2)
-      RETURN
+
       END
 
 
@@ -616,7 +538,7 @@
         REAL*8 Vec1(3), Vec2(3), Theta, magvec1, magvec2
 * -----------------------------  Locals  ------------------------------
         REAL*8 Temp
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         magvec1 = norm2(vec1)
@@ -1082,7 +1004,7 @@
         REAL*8 OneThird,
      &   Temp1, Temp2, Root1, Root2, Root3, P, Q, R, Delta,
      &   E0, CosPhi, SinPhi, Phi
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         OneThird  = 1.0D0/3.0D0
@@ -1213,7 +1135,7 @@
         REAL*8 OneThird,
      &   Temp1, Temp2, Root1, Root2, Root3, s, h, P, Q, R, Delta, E0,
      &   CosPhi, SinPhi, Phi, RPrime, hSqr, HCube, Eta, Beta
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         OneThird  = 1.0D0/3.0D0
@@ -1798,24 +1720,24 @@
 *
 * ------------------------------------------------------------------------------  
 
-      REAL*8 FUNCTION DETERMINANT ( Mat1, Order,MaxRow )
-        IMPLICIT NONE
-        INTEGER Order,MaxRow
-        REAL*8 Mat1( MaxRow,MaxRow )
+      REAL(wp) FUNCTION DETERMINANT ( Mat1, Order )
+
+        INTEGER, intent(in) :: Order
+        REAL(wp), intent(inout) :: Mat1(:,:)
 * -----------------------------  Locals  ------------------------------
-        REAL*8 Small, Temp, D, Sum
+        REAL(wp) Small, Temp, D, Sum
         INTEGER i,j,k,MaxR
         PARAMETER (MaxR = 10)
-        REAL*8 L(MaxR,MaxR), U(MaxR,MaxR)
+        REAL(wp) L(MaxR,MaxR), U(MaxR,MaxR)
 
         ! --------------------  Implementation   ----------------------
         Small = 0.00000001D0
         Sum   = 0.0D0
         ! ---------- Switch a non zero row to the first row -----------
-        IF ( DABS(   Mat1(1,1 ) ) .lt. Small ) THEN
+        IF ( ABS(   Mat1(1,1 ) ) .lt. Small ) THEN
             j= 1
             DO WHILE (j .le. Order)
-                IF ( DABS(   Mat1(j,1 ) ) .gt. Small ) THEN
+                IF ( ABS(   Mat1(j,1 ) ) .gt. Small ) THEN
                     DO k= 1, Order
                         Temp=    Mat1(1,k )
                           Mat1(1,k)=   Mat1(j,k )
@@ -1858,7 +1780,7 @@
           ENDDO
         Determinant= D 
 
-      RETURN
+
       END
       
       end module astmath

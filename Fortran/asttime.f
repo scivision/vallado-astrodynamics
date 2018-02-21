@@ -1,7 +1,6 @@
-*   -------------------------------------------------------------------
-*
-*                              ASTTIME.FOR
-*
+      module asttime
+      use comm
+      implicit none
 *   This file contains fundamental Astrodynamic procedures and functions
 *   relating to the time functions. These routines are discussed in Ch 3
 *   and Ch 5.
@@ -38,56 +37,9 @@
 *
 *     Uses object files:
 *         Astmath
-*     Uses common files:
-*         Astmath.cmn
-*
-*
-*
-*      SUBROUTINE INITTIME
-*
-*      INTEGER FUNCTION GETINTMON  ( MonStr )
-*
-*      INTEGER FUNCTION GETINTDAY  ( DayStr )
-*
-*      INTEGER FUNCTION DAYOFWEEK  ( JD )
-*
-*      SUBROUTINE DAYLIGHTST  ( Year, StartDay, StopDay, JDStartDST,
-*     &                         JDStopDST )
-*
-*      SUBROUTINE JDay        ( Year,Mon,Day,Hr,minute, Sec, JD, JDFrac )
-*
-*      SUBROUTINE JDayALL     ( Year,Mon,Day,Hr,minute,Sec, WhichType, JD, JDFrac )
-*
-*      SUBROUTINE DAY2SMDHMS  ( Year,Days,  Mon,Day,Hr,minute,Sec )
-*
-*      SUBROUTINE INVJDay     ( JD, JDFrac, Year,Mon,Day,Hr,minute, Sec )
-*
-*      SUBROUTINE FINDDAYS    ( Year,Month,Day,Hr,minute, Sec,  Days )
-*
-*      SUBROUTINE LSTIME      ( Lon, JD, LST, GST )
-*
-*      SUBROUTINE SUNRISESET  ( JD,Latgd,Lon, WhichKind, UTSunRise,
-*     &                         UTSunSet, Error )
-*
-*      SUBROUTINE MOONRISESET ( JD,Latgd,Lon, UTMoonRise, UTMoonSet,
-*     &                         MoonPhaseAng, Error )
-*
-*      SUBROUTINE HMS_SEC     ( Hr,minute, Sec, Direction, UTSec )
-*
-*      SUBROUTINE HMS_UT      ( Hr,minute, Sec, Direction, UT )
-*
-*      SUBROUTINE HMS_RAD     ( Hr,minute, Sec, Direction, HMS )
-*
-*      SUBROUTINE DMS_RAD     ( Deg,minute, Sec, Direction, DMS )
-*
-*      SUBROUTINE jd2sse      ( jd,Direction, sse )
-*
-*      SUBROUTINE CONVTIME    ( Year, Mon, Day, Hr, minute, SEC,
-*     &                         TimeZone, TypeUTIn, DUT1, DAT, xp, yp,
-*     &                         UT1, TUT1, JDUT1, UTC, TAI, TT, TTT,
-*     &                         JDTT, TDB, TTDB, JDTDB, DDPSi, DDEps,
-*     &                         LOD, Error )
-*
+
+      contains
+      
       SUBROUTINE INITTIME
         IMPLICIT NONE
 * ----------------------------  Locals  -------------------------------
@@ -322,7 +274,7 @@
 * ----------------------------  Locals  -------------------------------
         REAL*8 Zone
         INTEGER DW
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         ! ------- Find time zone information to adjust to a site ------ 
@@ -403,7 +355,8 @@
       SUBROUTINE JDay       ( Year,Mon,Day,Hr,minute, Sec, JD, JDFrac )
         IMPLICIT NONE
         INTEGER Year, Mon, Day, Hr, minute
-        REAL*8  Sec, JD, dtt, JDFrac
+        REAL*8  Sec, JD, dtt
+        real(wp), intent(out), optional :: JDFrac
 
         ! --------------------  Implementation   ----------------------
         JD= 367.0D0 * Year
@@ -712,7 +665,7 @@
 * ----------------------------  Locals  -------------------------------
         REAL*8 Temp, TUT1
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
 
@@ -768,7 +721,7 @@
 * ----------------------------  Locals  -------------------------------
         REAL*8 JD, Temp, TUT1
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         JD  = 367.0D0 * Year - ( INT((7*(Year+INT(10/12)))*0.25D0) )+
@@ -818,29 +771,23 @@
 *
 * -----------------------------------------------------------------------------
 
-      SUBROUTINE LSTIME      ( Lon, JD, LST, GST )
+      SUBROUTINE LSTIME( Lon, JD, LST, GST )
         IMPLICIT NONE
-        REAL*8 Lon, JD, LST, GST
+        REAL(wp), intent(in) :: Lon, JD 
+        real(wp), intent(out) :: LST, GST
 
-* ----------------------------  Locals  -------------------------------
-        EXTERNAL GSTIME
-        REAL*8 GSTIME
-
-        INCLUDE 'astmath.cmn'
-
-        ! --------------------  Implementation   ----------------------
         GST = GSTIME( JD )
         LST = Lon + GST
 
         ! ----------------------- Check quadrants ---------------------
-        LST = DMOD( LST,TwoPi )
-        IF ( LST .lt. 0.0D0 ) THEN
+        LST = MOD( LST,TwoPi )
+        IF ( LST < 0.0D0 ) THEN
             LST= LST + TwoPi
-          ENDIF
+        ENDIF
 
-      RETURN
+
       END
-*
+
 * -----------------------------------------------------------------------------
 *
 *                           SUBROUTINE SUNRISESET
@@ -905,7 +852,7 @@
      &         JDTemp, UTTemp, SunAngle, TUT1, Ra, Sec, MeanLonSun,
      &         LonEcliptic, Decl, Obliquity, GST, LHA
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         Error= 'ok'
@@ -1088,7 +1035,7 @@
      &    LonEclSun, LonEclMoon, MeanAnomaly, MeanLong, ttdb,
      &    Sec, JDTemp, UTTemp, RtAsc, Decl
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         Error = 'ok'
@@ -1408,7 +1355,7 @@
 * ----------------------------  Locals  ------------------------------
         REAL*8  Temp
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         Temp= 15.0D0*Pi/180.0D0
@@ -1459,7 +1406,7 @@
 * ----------------------------  Locals  ------------------------------
         REAL*8  Temp
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         IF ( Direction.eq.'FROM' ) THEN
@@ -1597,7 +1544,7 @@
         INTEGER hrTemp, minTemp, LocalHr
         REAL*8 secTemp, ME, JD
 
-        INCLUDE 'astmath.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         Error= 'ok'
@@ -1646,4 +1593,6 @@
         TTDB= (JDTDB+JDTDBF - 2451545.0D0 )/ 36525.0D0
 
       RETURN
-      END   ! SUBROUTINE CONVTIME
+      END   SUBROUTINE CONVTIME
+      
+      end module asttime

@@ -1,7 +1,9 @@
-*   -------------------------------------------------------------------
-*
-*                              ASTPERT.FOR
-*
+      module astpert
+      use comm
+      use astmath
+      use ast2body
+      use astiod
+      implicit none
 *   this file contains fundamental astrodynamic procedures and functions
 *   allowing the calcualtions of perturbations. most of these routines
 *   are discussed in ch 8.
@@ -31,35 +33,6 @@
 *          AstTime
 *          Ast2body
 *          AstIod
-*
-*      SUBROUTINE PKEPLER     ( Ro,Vo,nDot,Nddot,DtSec,     R,V          )
-*
-*      SUBROUTINE J2DragPert  ( Incl,Ecc,N,NDot,  OmegaDOT,ArgpDOT,EDOT )
-*
-*      SUBROUTINE PREDICT     ( JD,latgd,LST, r,v,rs, WhichKind,
-*     &                           Rho,Az,El,tRtasc,tDecl, Vis )
-*
-*      SUBROUTINE Deriv       ( X,  XDot )
-*
-*      SUBROUTINE InitGravityField   ( Order, C,S )
-*
-*      SUBROUTINE LegPoly     ( Latgc, Order, LArr )
-*
-*      SUBROUTINE FullGeop    ( R,V, ITime,WhichOne,BC,Order,C,S,APert  )
-*
-*      SUBROUTINE PERTACCEL   ( R,V, ITime, WhichOne, BC, APert )
-*
-*      SUBROUTINE PDERIV      ( ITime,X,DerivType,BC,  XDot )
-*
-*      SUBROUTINE RK4         ( ITime,DtDay,XDot,DerivType,BC,  X )
-*
-*      SUBROUTINE RKF45       ( ITime, DtDay, XDot,DerivType, BC, X )
-*
-*      SUBROUTINE Cowell      ( R,V,ITime,FTime,DtDay,DerivType,BC, R1,V1 )
-*
-*      SUBROUTINE ATMOS       ( R, Rho )
-*
-*
 * ------------------- Constants used in this Library ------------------
 *
 *     J2         : REAL*8 =    0.00108263D0
@@ -70,7 +43,7 @@
 *
 * ---------------------------------------------------------------------
 
-*
+      contains
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE PKEPLER
@@ -133,8 +106,8 @@
      &         TrueLon, LonPerg, OmegaDot, E0, ArgpDot, MDot,ArgLatDot,
      &         TrueLonDot, LonPerDot, n, J2oP2, J2
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         J2    =  0.00108263D0
@@ -256,7 +229,7 @@
 
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE PREDICT
@@ -313,7 +286,6 @@
 *    SUN         - Position vector of SUN
 *    CROSS       - CROSS Product of two vectors
 *    ROT2,ROT3   - Rotations about 2nd .and. 3rd axis
-*    LNCOM1      - Combination of a vector .and. a scalar
 *    LNCOM2      - Combination of two vectors .and. two scalars
 *    RV_RAZEL    - Conversion with vectors .and. range azimuth elevation
 *    RV_TRADEC   - Conversion with topocentric right ascension declination
@@ -323,7 +295,7 @@
 *    Vallado       2007, 900, Alg 73, Ex 11-6
 *
 * ------------------------------------------------------------------------------
-*
+
       SUBROUTINE PREDICT       ( JD,latgd,LST, r,v,rs, WhichKind,
      &                           Rho,Az,El,tRtasc,tDecl, Vis )
         IMPLICIT NONE
@@ -331,15 +303,15 @@
      &         tdecl
         CHARACTER WhichKind
         CHARACTER*11 Vis
-        EXTERNAL MAG
+        
 * -----------------------------  Locals  ------------------------------
         REAL*8 RhoVec(3), TempVec(3), RhoV(3), RSun(3), C(3), MAG,
      &         rr, drr, dtrtasc, dtdecl, SRtAsc, SDecl, Dist,
      &         drho, daz, del, SunAngle, SatAngle, AngleLimit,
      &         magc, magrsun,magr
 
-        INCLUDE 'astmath.cmn'
-        INCLUDE 'astconst.cmn'
+        
+        
 
         ! --------------------  Implementation   ----------------------
         Az    =  0.0D0
@@ -349,8 +321,8 @@
         TDecl =  0.0D0
 
         ! ------ Find IJK range vector from SITE to satellite ---------
-        CALL LNCOM2( 1.0D0,-1.0D0,R,RS,  RhoV )
-        Rho= MAG(RhoV)
+        RhoV = 1.0D0*R - 1.0D0*RS
+        Rho= norm2(RhoV)
 
         ! ------- Calculate Topocentric Rt Asc .and. Declination ------
         CALL RV_TRADEC(r,v,rs,'TOO',rr,trtasc,tdecl,Drr,Dtrtasc,Dtdecl)
@@ -364,7 +336,7 @@
         IF ( RhoVec(3) .gt. 0.0D0 ) THEN
             ! --------- Is the SITE in the LIGHT, or the dark? --------
             CALL SUN( JD,RSun,SRtAsc,SDecl )
-            CALL LNCOM1( AUER,RSun, RSun )
+            RSun = AUER*RSun
             CALL ANGLE( RSun,RS, SunAngle )
             IF ( WHICHKind .eq.'S') THEN
                AngleLimit= (90.0D0 + 50.0D0/60.0D0)*Deg2Rad
@@ -388,9 +360,9 @@
                 ! ---------- This assumes a conical shadow ------------
                 ! ----- Is the satellite in the shadow .or. not? ------
                 CALL CROSS( RSun, R, C )
-                Magc = MAG(c)
-                Magr = MAG(r)
-                Magrsun = MAG(rsun)
+                Magc = norm2(c)
+                Magr = norm2(r)
+                Magrsun = norm2(rsun)
                 SatAngle= DASIN( magc/ (magrsun*magr) )
                 Dist= magr*DCOS( SatAngle - HalfPi )
                 IF ( Dist .gt. 1.0D0 ) THEN
@@ -609,7 +581,7 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
         IMPLICIT NONE
         REAL*8 R(3), V(3), ITime,BC,C(70,70),S(70,70),APert(6)
         INTEGER Order, WhichOne
-        EXTERNAL MAG
+        
         INTEGER L, m
         REAL*8 LArr(0:70,0:70), OORDelta, Temp, OOr,  SumM1, SumM2,MAG,
      &         SumM3, DistPartr, DistPartPhi, DistPartLon, RDelta,
@@ -621,7 +593,7 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
         CALL LegPoly( Latgc,Order, LArr )
 
         ! --------- Partial derivatives of disturbing potential -------
-        magr = MAG(r)
+        magr = norm2(r)
         OOr= 1.0D0/magr
         LastOOr= 1.0D0/magr
         SumM1= 0.0D0
@@ -715,7 +687,7 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
         IMPLICIT NONE
         REAL*8 R(3), V(3), ITime,BC,APert(6)
         INTEGER WhichOne
-        EXTERNAL MAG
+        
 * -----------------------------  Locals  ------------------------------
         INTEGER i
 * fix the c and s vars
@@ -727,7 +699,7 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
      &         J4, GMS, GMM, DOT, Mag, magr, magv, magrsun, magrmoon
         EXTERNAL DOT
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! --------------------  Implementation   ----------------------
         J2         =    0.00108263D0
@@ -735,8 +707,8 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
         J4         =   -0.00000161D0
         GMS        =    3.329529364D5
         GMM        =    0.01229997D0
-        magr = MAG( R )
-        magv = MAG( V )
+        magr = norm2( R )
+        magv = norm2( V )
         R2 = magr*magr
         R3 = R2*magr
         R4 = R2*R2
@@ -786,11 +758,11 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
                     RSun(i)= RSun(i)*AuER    ! chg AU's to km's
                   ENDDO
 
-                magrsun = MAG(rsun)
+                magrsun = norm2(rsun)
 
                 RS2= magrsun*magrsun
                 RS3= RS2*magrsun
-                Temp= DOT( R,RSun )
+                Temp= dot_product( R,RSun )
                 Temp1= -GMS/RS3
                 Temp2= 3.0D0*Temp/RS2
                 APert(1)= Temp1 * (r(1) - Temp2*RSun(1))
@@ -801,10 +773,10 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
         ! -----------------  MOON Acceleration   ----------------------
         IF ( WhichOne .eq. 5 ) THEN
                 CALL MOON( ITime,RMoon,MRtAsc,MDecl )
-                magrmoon = MAG(rmoon)
+                magrmoon = norm2(rmoon)
                 RM2= magRMoon**2
                 RM3= RM2*magRMoon
-                Temp= DOT( R,RMoon )
+                Temp= dot_product( R,RMoon )
                 Temp1= -GMM/RM3
                 Temp2= 3.0D0*Temp/RM2
                 APert(1)= Temp1 * (r(1) - Temp2*RMoon(1))
@@ -817,7 +789,7 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
                 Va(1)= V(1) + (OmegaEarth*r(2))   ! km/s
                 Va(2)= V(2) - (OmegaEarth*r(1))
                 Va(3)= V(3)
-                magva = MAG( Va )
+                magva = norm2( Va )
 
                 CALL ATMOS( R, Rho )
 
@@ -880,12 +852,7 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
 *
 *  Coupling      :
 *    PERTACCEL   - Calculates the actual values of each perturbing acceleration
-*    ADDVEC      - Adds two vectors together
-*    MAG         - Magnitude of a vector
-*
-*  References    :
-*
-* ------------------------------------------------------------------------------
+
 
       SUBROUTINE PDERIV( ITime,X,DerivType,BC,  XDot )
         IMPLICIT NONE
@@ -896,7 +863,7 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
         REAL*8 RCubed,Ro(3),Vo(3),APert(3),TempPert(3), magr, magv, MAG
         INTEGER i
 
-        EXTERNAL MAG
+        
         
         ! --------------------  Implementation   ----------------------
         DO i= 1, 3
@@ -904,8 +871,8 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
             Ro(i)   = X(i)
             Vo(i)   = X(i+3)
         ENDDO
-        magr = MAG( Ro )
-        magv = MAG( Vo )
+        magr = norm2( Ro )
+        magv = norm2( Vo )
 *        APert(4)= 0.0D0
         RCubed = magr**3
 
@@ -920,32 +887,32 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
           ENDIF
         IF ( DerivType(2:2).eq.'Y' ) THEN
             CALL PertAccel( Ro,Vo,ITime,2,BC, TempPert )
-            CALL AddVec( TempPert,APert,APert )
+            APert = APert + TempPert
           ENDIF
         IF ( DerivType(3:3).eq.'Y' ) THEN
             CALL PertAccel( Ro,Vo,ITime,3,BC, TempPert )
-            CALL AddVec( TempPert,APert,APert )
+            APert = APert + TempPert
           ENDIF
         IF ( DerivType(4:4).eq.'Y' ) THEN
             CALL PertAccel( Ro,Vo,ITime,4,BC, TempPert )
-            CALL AddVec( TempPert,APert,APert )
+            APert = APert + TempPert
           ENDIF
         IF ( DerivType(5:5).eq.'Y' ) THEN
             CALL PertAccel( Ro,Vo,ITime,5,BC, TempPert )
-            CALL AddVec( TempPert,APert,APert )
+            APert = APert + TempPert
           ENDIF
         IF ( DerivType(6:6).eq.'Y' ) THEN
             CALL PertAccel( Ro,Vo,ITime,6,BC, TempPert )
-            CALL AddVec( TempPert,APert,APert )
+            APert = APert + TempPert
           ENDIF
         IF ( DerivType(7:7).eq.'Y' ) THEN
             CALL PertAccel( Ro,Vo,ITime,7,BC, TempPert )
-            CALL AddVec( TempPert,APert,APert )
+            APert = APert + TempPert
           ENDIF
         ! -------------------- new full gravity field -----------------
         IF ( DerivType(10:10) .eq. 'Y' ) THEN
             CALL PERTACCEL( Ro,Vo,ITime,10,BC, TempPert )
-            CALL ADDVEC( TempPert,APert,APert )
+            APert = APert + TempPert
           ENDIF
 
         XDot(4)= (-X(1) / RCubed) + APert(1)
@@ -1326,8 +1293,8 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
                 v1(i-3)=   X(i)
               ENDIF
           ENDDO
-*        CALL MAG( R1 )
-*        CALL MAG( V1 )
+*        CALL norm2( R1 )
+*        CALL norm2( V1 )
 
       RETURN
       END
@@ -1374,19 +1341,19 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
       SUBROUTINE ATMOS       ( R,Rho )
         IMPLICIT NONE
         Real*8 R(3),Rho
-        EXTERNAL MAG
+        
         INTEGER i
         REAL*8 Hellp, OldDelta, Latgd, SinTemp, c, Decl, Temp, H,
      &         RhoNom, BaseAlt, LastBaseAlt, Small,
      &         LastH, LastRhoNom, MAG, magr
 
-        INCLUDE 'astconst.cmn'
+        
 
         ! -------------------  Initialize values   --------------------
         Small      =     0.0000001D0
         OPEN( UNIT=25,File='atmosexp.dat',STATUS='OLD' )
 
-        magr = MAG( R )
+        magr = norm2( R )
         Decl = DASIN( R(3) / magr )
         Latgd= Decl
 
@@ -1426,4 +1393,5 @@ c old way        CALL RV_RAZEL( r,v,rs,latgd,LST,'TOO', rho,az,el,drho,daz,del )
  999    CLOSE( 25 )
       RETURN
       END
-*
+      
+      end module astpert
