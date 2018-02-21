@@ -1,3 +1,8 @@
+      module astmath
+      use, intrinsic:: iso_fortran_env, only: wp=>real64
+      implicit none
+      
+      contains
 *   -------------------------------------------------------------------
 *
 *                              ASTMATH.FOR
@@ -32,21 +37,11 @@
 *
 *      REAL*8 FUNCTION BINOMIAL ( i,j )
 *
-*      REAL*8 FUNCTION MIN      ( X, Y )
-*
-*      REAL*8 FUNCTION MAX      ( X, Y )
-*
 *      SUBROUTINE PLANE         ( x1,y1,z1,x2,y2,z2,x3,y3,z3, a,b,c,d )
 *
 *      --------------------  Trigonometric Functions  -----------------
 *
 *      REAL*8 FUNCTION DCOT   ( XVal )
-*
-*      REAL*8 FUNCTION ACOSH  ( XVal )
-*
-*      REAL*8 FUNCTION SINH   ( XVal )
-*
-*      REAL*8 FUNCTION ASINH  ( XVal )
 *
 *      REAL*8 FUNCTION ATANH  ( XVal )
 *
@@ -72,18 +67,6 @@
 *
 *      SUBROUTINE ROT3MAT     ( XVal, OutMat )
 *
-*      SUBROUTINE ADDVEC      ( Vec1,Vec2, OutVec )
-*
-*      SUBROUTINE SUBVEC      ( Vec1,Vec2, OutVec )
-*
-*      SUBROUTINE ADD3VEC     ( Vec1,Vec2,Vec3, OutVec )
-*
-*      SUBROUTINE LNCOM1      ( A, Vec,  OutVec )
-*
-*      SUBROUTINE LNCOM2      ( A1, A2, Vec1, Vec2,  OutVec )
-*
-*      SUBROUTINE LNCOM3      ( A1, A2, A3, Vec1, Vec2, Vec3,  OutVec )
-*
 *      SUBROUTINE ANGLE       ( Vec1,Vec2, Theta )
 *
 *      ----------------------- Polynomial routines --------------------
@@ -102,17 +85,7 @@
 *      SUBROUTINE QUARTIC     ( a,b,c,d,e, R1r,R1i,R2r,R2i,
 *
 *      ------------------------- Misc functions -----------------------
-*      SUBROUTINE MATSCALE    ( Mat1,Scale,Mat1r,Mat1c,Max1r,Max1c, Mat2 )
-*
-*      SUBROUTINE MATMULT     ( Mat1,Mat2, Mat1r,Mat1c,Mat2c,Max1r,Max1c,Max2c, Mat3 )
-*
-*      SUBROUTINE MATADD      ( Mat1,Mat2, Mat1r,Mat1c,Max1r,Max1c, Mat3 )
-*
-*      SUBROUTINE MATSUB      ( Mat1,Mat2, Mat1r,Mat1c,Max1r,Max1c, Mat3 )
-*
 *      SUBROUTINE MATTRANS    ( Mat1, Mat1r,Mat1c,Max1r,Max1c, Mat2 )
-*
-*      SUBROUTINE MatVecMult  ( Mat1, Vec2, Mat1r,Mat1c,Max1r,Max1c, Vec3 )
 *
 *      SUBROUTINE MAKEMAT     ( Angl, Numbr, Matr )
 *
@@ -142,13 +115,12 @@
 *  Author        : David Vallado                  719-573-2600    1 Mar 2001
 *
 *  Inputs          Description                    Range / Units
-*    x           - Input value
+*    N           - Input value
 *
 *  Outputs       :
 *    FUNCTION    - answer
 *
 *  Locals        :
-*    Temp        - Temporary variable
 *    i           - Index
 *
 *  Coupling      :
@@ -156,21 +128,14 @@
 *
 * ------------------------------------------------------------------------------
 
-      REAL*8 FUNCTION  FACTORIAL ( x )
-        IMPLICIT NONE
-        INTEGER x
-* -----------------------------  Locals  ------------------------------
-        REAL*8 Temp
-        INTEGER i
+      elemental REAL(wp) FUNCTION  FACTORIAL(N)
+       INTEGER, intent(in) :: N
+       INTEGER i
 
-        ! --------------------  Implementation   ----------------------
-        Temp= 1.0D0
-        DO i= 2, x
-            Temp= Temp * i
-          ENDDO
-        FACTORIAL= Temp
-      RETURN
-      END
+       Factorial = product([(i, i=1, N)])
+
+
+      END FUNCTION  FACTORIAL
 
 * ------------------------------------------------------------------------------
 *
@@ -195,91 +160,14 @@
 *
 * ------------------------------------------------------------------------------
 
-      REAL*8 FUNCTION  BINOMIAL ( i,j )
-        IMPLICIT NONE
-        INTEGER i,j
-        EXTERNAL Factorial
-* -----------------------------  Locals  ------------------------------
-        REAL*8 FACTORIAL
+      elemental REAL(wp) FUNCTION  BINOMIAL( i,j )
 
-        ! --------------------  Implementation   ----------------------
-        BINOMIAL= FACTORIAL(j) / ( FACTORIAL(i)*FACTORIAL(j-i) )
-      RETURN
-      END
-*
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION MIN
-*
-*  this function determines the minimum of 2 values.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    X           - Value number 1
-*    Y           - Value number 2
-*
-*  OutPuts       :
-*    MIN         - Minimum of x or y
-*
-*  Locals        :
-*    None.
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------
+        INTEGER, intent(in) :: i,j
 
-      REAL*8 FUNCTION MIN ( X, Y )
-        IMPLICIT NONE
-        REAL*8 X,Y
+       BINOMIAL= FACTORIAL(j) / ( FACTORIAL(i)*FACTORIAL(j-i) )
 
-        ! --------------------  Implementation   ----------------------
-        IF ( X .lt. Y ) THEN
-            MIN = X
-          ELSE
-            MIN = Y
-          ENDIF
-      RETURN
-      END
+      END FUNCTION  BINOMIAL 
 
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION MAX
-*
-*  this function determines the maximum of 2 values.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    X           - Value number 1
-*    Y           - Value number 2
-*
-*  OutPuts       :
-*    MAX         - Minimum of x or y
-*
-*  Locals        :
-*    None.
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------
-
-      REAL*8 FUNCTION MAX    ( X, Y )
-        IMPLICIT NONE
-        REAL*8 X,Y
-
-        ! ----------------------  Implementation   --------------------
-        IF ( X .gt. Y ) THEN
-            MAX = X
-          ELSE
-            MAX = Y
-          ENDIF
-      RETURN
-      END
-
-*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE PLANE
@@ -334,10 +222,10 @@
         d= -(x1*(yz23 - yz32) - y1*(xz23-xz32) + z1*(xy23 -xy32))
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
-*                           FUNCTION DCOT
+*                           FUNCTION COT
 *
 *  this function finds the Cotangent of an ANGLE in radians.
 *
@@ -354,201 +242,15 @@
 *
 * ------------------------------------------------------------------------------
 
-      REAL*8 FUNCTION DCOT    ( XVal )
+      Elemental REAL(wp) FUNCTION COT(XVal)
         IMPLICIT NONE
-        REAL*8 XVal
+        REAL(wp), intent(in) :: XVal
 
-        REAL*8 Temp
+        COT = 1/TAN(XVal)
 
-        INCLUDE 'astmath.cmn'
-
-        Temp= DTAN( XVal )
-
-        IF (DABS( Temp ) .lt. Small) THEN
-            DCOT = Infinite
-          ELSE
-            DCOT = 1.0 / Temp
-          ENDIF
-      RETURN
-      END
-
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION ACOSH
-*
-*  this function evaluates the inverse hyperbolic cosine FUNCTION.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    XVal        - ANGLE Value                                  1.0D0 to Infinity
-*
-*  OutPuts       :
-*    ACOSH     - Result                                       any real
-*
-*  Locals        :
-*    Temp        - Temporary REAL*8 Value
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------  
-
-      REAL*8 FUNCTION ACOSH( XVal )
-        IMPLICIT NONE
-        REAL*8 XVal
-* -----------------------------  Locals  ------------------------------
-        REAL*8 Undefined, Temp
-
-        ! --------------------  Implementation   ----------------------
-        Undefined  = 999999.1D0
-        IF ( XVal*XVal - 1.0D0 .lt. 0.0D0 ) THEN
-            Temp= Undefined
-            Write(*,*) 'Error in ACOSH FUNCTION '
-          ELSE
-            Temp= DLOG( XVal + DSQRT( XVal*XVal - 1.0D0 ) )
-          ENDIF
-
-        ACOSH= Temp 
-      RETURN
-      END
-*
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION SINH
-*
-*  this function evaluates the hyperbolic sine FUNCTION.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    XVal        - ANGLE Value                                  any real
-*
-*  OutPuts       :
-*    SINH        - Result                                       any real
-*
-*  Locals        :
-*    None.
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------  
-
-      REAL*8 FUNCTION SINH   ( XVal )
-        IMPLICIT NONE
-        REAL*8 XVal
-        ! --------------------  Implementation   ----------------------
-        SINH= 0.5D0*( EXP(XVal) - EXP(-XVal) ) 
-      RETURN
-      END
+      END FUNCTION COT
 
 
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION ASINH
-*
-*  this function evaluates the inverse hyperbolic sine FUNCTION.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    XVal        - ANGLE Value                                  any real
-*
-*  OutPuts       :
-*    ASINH     - Result                                       any real
-*
-*  Locals        :
-*    None.
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------  
-
-      REAL*8 FUNCTION ASINH( XVal )
-        IMPLICIT NONE
-        REAL*8 XVal
-
-        ! --------------------  Implementation   ----------------------
-        ASINH= DLOG( XVal + DSQRT( XVal*XVal + 1.0D0 ) )
-
-      RETURN
-      END  ! end asinh
-*
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION ATANH
-*
-*  this function evaluates the inverse hyperbolic tangent FUNCTION.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    XVal        - ANGLE Value                                  -1.0D0 to 1.0D0
-*
-*  OutPuts       :
-*    ATANH     - Result                                       any real
-*
-*  Locals        :
-*    Temp        - Temporary REAL*8 Value
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------  
-
-      REAL*8 FUNCTION ATANH( XVal )
-        IMPLICIT NONE
-        REAL*8 XVal
-* -----------------------------  Locals  ------------------------------
-        REAL*8 Temp
-
-        INCLUDE 'astmath.cmn'
-
-        ! --------------------  Implementation   ----------------------
-        IF ( 1.0D0 - DABS(XVal) .lt. Small ) THEN
-            Temp= Undefined
-            Write(*,*) 'Error in ATANH FUNCTION '
-          ELSE
-            Temp= 0.5D0 * DLOG( (1.0D0 + XVal) / (1.0D0 - XVal) )
-          ENDIF
-
-        ATANH= Temp 
-      RETURN
-      END
-*
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION DOT
-*
-*  this function finds the DOT product of two vectors.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Vec1        - Vector number 1
-*    Vec2        - Vector number 2
-*
-*  OutPuts       :
-*    DOT         - Result
-*
-*  Locals        :
-*    None.
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------  
-
-      REAL*8 FUNCTION DOT    ( Vec1,Vec2 )
-        IMPLICIT NONE
-        REAL*8 Vec1(3), Vec2(3)
-
-        ! --------------------  Implementation   ----------------------
-        DOT= Vec1(1)*Vec2(1) + Vec1(2)*Vec2(2) + Vec1(3)*Vec2(3)
-      RETURN
-      END
 
 
 * ------------------------------------------------------------------------------
@@ -584,46 +286,7 @@
 
       RETURN
       END
-*
-* ------------------------------------------------------------------------------
-*
-*                           FUNCTION MAG
-*
-*  this subroutine finds the magnitude of a vector.  The tolerance is set to
-*    0.00000001D0, thus the 1.0D0E-16 for the squared test of underflows.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Vec       - Vector
-*
-*  OutPuts       :
-*    Mag       - Answer 
-*
-*  Locals        :
-*    None.
-*
-*  Coupling      :
-*    None.
-*
-* ------------------------------------------------------------------------------  
 
-      REAL*8 FUNCTION MAG    ( Vec )
-        IMPLICIT NONE
-        REAL*8 Vec(3)
-* -----------------------------  Locals  ------------------------------
-        Real*8 Temp
-
-        ! --------------------  Implementation   ----------------------
-        Temp= Vec(1)*Vec(1) + Vec(2)*Vec(2) + Vec(3)*Vec(3)
-
-        IF ( DABS( Temp ) .ge. 1.0D-16 ) THEN
-            MAG = DSQRT( Temp )
-          ELSE
-            MAG = 0.0D0
-          ENDIF
-      RETURN
-      END
 
 * ------------------------------------------------------------------------------
 *
@@ -652,16 +315,15 @@
       SUBROUTINE NORM        ( Vec, OutVec )
         IMPLICIT NONE
         REAL*8 Vec(3), OutVec(3)
-        EXTERNAL MAG
 
 * -----------------------------  Locals  ------------------------------
-        REAL*8 MAG, MagVec
+        REAL*8 MagVec
         INTEGER i
 
         INCLUDE 'astmath.cmn'
 
         ! --------------------  Implementation   ----------------------
-        MagVec = MAG( Vec )
+        MagVec = norm2( Vec )
         IF ( MagVec .gt. Small ) THEN
             DO i= 1, 3
                 OutVec(i)= Vec(i)/MagVec
@@ -854,236 +516,9 @@
 
       RETURN
       END
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE ADDVEC
-*
-*  this subroutine adds two vectors.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Vec1        - Vector number 1
-*    Vec2        - Vector number 2
-*
-*  OutPuts       :
-*    OutVec      - Vector result of A + B
-*
-*  Locals        :
-*    i           - Index
-*
-*  Coupling      :
-*
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE ADDVEC      ( Vec1,Vec2, OutVec )
-        IMPLICIT NONE
-        REAL*8 Vec1(3), Vec2(3), OutVec(3)
-* -----------------------------  Locals  ------------------------------
-        INTEGER i
-
-        ! --------------------  Implementation   ----------------------
-        DO i=1 , 3
-            OutVec(i)= Vec1(i) + Vec2(i)
-          ENDDO
-      RETURN
-      END
-
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE SUBVEC
-*
-*  this subroutine subtracts two vectors.
-*
-*  Author        : David Vallado                  719-573-2600   13 Feb 2003
-*
-*  Inputs          Description                    Range / Units
-*    Vec1        - Vector number 1
-*    Vec2        - Vector number 2
-*
-*  OutPuts       :
-*    OutVec      - Vector result of A - B
-*
-*  Locals        :
-*    i           - Index
-*
-*  Coupling      :
-*
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE SUBVEC      ( Vec1,Vec2, OutVec )
-        IMPLICIT NONE
-        REAL*8 Vec1(3), Vec2(3), OutVec(3)
-* -----------------------------  Locals  ------------------------------
-        INTEGER i
-
-        ! --------------------  Implementation   ----------------------
-        DO i=1 , 3
-            OutVec(i)= Vec1(i) - Vec2(i)
-          ENDDO
-      RETURN
-      END
 
 
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE ADD3VEC
-*
-*  this subroutine adds three vectors.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Vec1        - Vector number 1
-*    Vec2        - Vector number 2
-*    Vec3        - Vector number 3
-*
-*  OutPuts       :
-*    OutVec      - Vector result of Vec1 + Vec2 + Vec3
-*
-*  Locals        :
-*    i           - Index
-*
-*  Coupling      :
-*
-*
-* ------------------------------------------------------------------------------
 
-      SUBROUTINE ADD3VEC      ( Vec1,Vec2,Vec3, OutVec )
-        IMPLICIT NONE
-        REAL*8 Vec1(3), Vec2(3), Vec3(3), OutVec(3)
-* -----------------------------  Locals  ------------------------------
-        INTEGER i
-
-        ! --------------------  Implementation   ----------------------
-        DO i = 1, 3
-            OutVec(i)= Vec1(i) + Vec2(i) + Vec3(i)
-          ENDDO
-      RETURN
-      END
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE LNCOM1
-*
-*  this subroutine calculates the linear combination of a vector
-*    multiplied by a constants.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    A1          - constant number
-*    Vec         - Vector number
-*
-*  OutPuts       :
-*    OutVec      - Vector result of A1*Vec1 + A2*Vec2
-*
-*  Locals        :
-*    i           - Index
-*
-*  Coupling      :
-*
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE LNCOM1      ( A, Vec,  OutVec )
-        IMPLICIT NONE
-        REAL*8 A, Vec(3), OutVec(3)
-* -----------------------------  Locals  ------------------------------
-        INTEGER i
-
-        ! --------------------  Implementation   ----------------------
-        DO i= 1, 3
-            OutVec(i)= A*Vec(i)
-          ENDDO
-      RETURN
-      END
-
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE LNCOM2
-*
-*  this subroutine calculates the linear combination of two vectors
-*    multiplied by two different constants.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    A1          - constant number 1
-*    A2          - constant number 2
-*    Vec1        - Vector number 1
-*    Vec2        - Vector number 2
-*
-*  OutPuts       :
-*    OutVec      - Vector result of A1*Vec1 + A2*Vec2
-*
-*  Locals        :
-*    i           - Index
-*
-*  Coupling      :
-*
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE LNCOM2      ( A1, A2, Vec1, Vec2,  OutVec )
-        IMPLICIT NONE
-        REAL*8 A1, A2, Vec1(3), Vec2(3), OutVec(3)
-* -----------------------------  Locals  ------------------------------
-        INTEGER i
-
-        ! --------------------  Implementation   ----------------------
-        DO i= 1, 3
-            OutVec(i)= a1*Vec1(i) + a2*Vec2(i)
-          ENDDO
-      RETURN
-      END
-
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE LNCOM3
-*
-*  this subroutine calculates the linear combination of three vectors
-*    multiplied by three different constants.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    A1          - constant number 1
-*    A2          - constant number 2
-*    A3          - constant number 3
-*    Vec1        - Vector number 1
-*    Vec2        - Vector number 2
-*    Vec3        - Vector number 3
-*
-*  OutPuts       :
-*    OutVec      - Vector result of A1*Vec1 + A2*Vec2 + A3*Vec3
-*
-*  Locals        :
-*    i           - Index
-*
-*  Coupling      :
-*
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE LNCOM3      ( A1, A2, A3, Vec1, Vec2, Vec3,  OutVec )
-        IMPLICIT NONE
-        REAL*8 A1, A2, A3, Vec1(3), Vec2(3), Vec3(3), OutVec(3)
-* -----------------------------  Locals  ------------------------------
-        INTEGER i
-
-        ! --------------------  Implementation   ----------------------
-        DO i= 1, 3
-            OutVec(i)= a1*Vec1(i) + a2*Vec2(i) + a3*Vec3(i)
-          ENDDO
-      RETURN
-      END
-
-*
 * ---- this subroutine takes an arbitrary number of points .and.
 *  fits a polynomial of degree <degree>. The datapoints are stored in a
 *  matrix having rows <NumPts> by 2 <one for x, and y>.
@@ -1142,7 +577,7 @@
 
         ! --------- Solve linear equations for coeffeicients ----------
         CALL MATINVERSE( A      , 3,Maxr         , AI )
-        CALL MATMULT   ( AI,b, 3,3,1,MaxR,MaxR,MaxR     , coeff )
+        coeff = MATMUL( AI,b)
 
         ! ----------------- Find minimum values -----------------------
         MinX= -coeff(2,1) / ( 2*coeff(3,1) )
@@ -1172,24 +607,22 @@
 *    Temp        - Temporary REAL variable
 *
 *  Coupling      :
-*    DOT           DOT Product of two vectors
 *    DACOS        Arc Cosine FUNCTION
 *
 * ------------------------------------------------------------------------------  
 
-      SUBROUTINE ANGLE       ( Vec1,Vec2, Theta )
+      SUBROUTINE ANGLE( Vec1,Vec2, Theta )
         IMPLICIT NONE
         REAL*8 Vec1(3), Vec2(3), Theta, magvec1, magvec2
-        EXTERNAL Dot, Mag
 * -----------------------------  Locals  ------------------------------
-        REAL*8 Temp, Dot, Mag
+        REAL*8 Temp
         INCLUDE 'astmath.cmn'
 
         ! --------------------  Implementation   ----------------------
-        magvec1 = MAG(vec1)
-        magvec2 = MAG(vec2)
+        magvec1 = norm2(vec1)
+        magvec2 = norm2(vec2)
         IF ( magVec1*magVec2 .gt. Small**2 ) THEN
-            Temp= DOT(Vec1,Vec2) / (magVec1*magVec2)
+            Temp= DOT_product(Vec1,Vec2) / (magVec1*magVec2)
             IF ( DABS( Temp ) .gt. 1.0D0 ) THEN
                 Temp= DSIGN(1.0D0, Temp)
               ENDIF
@@ -1197,10 +630,10 @@
           ELSE
             Theta= Undefined
           ENDIF
-      RETURN
-      END  ! end angle
 
-*
+      END subroutine angle
+
+
       SUBROUTINE DMulRSub    ( ALPR,ALPI,BETR,BETI )
         IMPLICIT NONE
         REAL*8 Alpr(4), Alpi(4), Betr(4), Beti(4)
@@ -1316,7 +749,7 @@
          ALPI(4)= ALPI(3)+Te3*Te6+Te4*Te5
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE FACTOR
@@ -1533,7 +966,7 @@
 
       RETURN
       END
-*
+
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE QUADRATIC
@@ -1713,7 +1146,7 @@
         R3r= Root3 - P*OneThird 
       RETURN
       END
-*
+*
 * ------------------------------------------------------------------------------
 *
 *                           SUBROUTINE QUARTIC
@@ -1919,241 +1352,8 @@
         R4r= R4r + h 
       RETURN
       END
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE MATSCALE
-*
-*  this subroutine multiplies a matrix by a constant.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Mat1        - Matrix number 1
-*    Scale       - Constant value to multiply by
-*
-*  OutPuts       :
-*    Mat2        - Matrix result of Mat1 * Scale
-*
-*  Locals        :
-*    Row         - Row Index
-*    Col         - Column Index
-*
-*  Coupling      :
-*
-* ------------------------------------------------------------------------------
 
-      SUBROUTINE MATSCALE   ( Mat1,Scale,Mat1r,Mat1c,Max1r,Max1c, Mat2 )
-        IMPLICIT NONE
-        INTEGER Mat1r,Mat1c, Max1r, Max1c
-        REAL*8 Mat1(Max1r,Max1c),Scale,Mat2(Max1r,Max1c)
-* -----------------------------  Locals  ------------------------------
-        INTEGER Row,Col
 
-        ! --------------------  Implementation   ----------------------
-        DO Row=1, Mat1r
-            DO Col= 1, Mat1c
-                  Mat2(Row,Col)= Mat1(Row,Col)*Scale
-              ENDDO
-          ENDDO
-      RETURN
-      END
-
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE MATMULT
-*
-*  this subroutine multiplies two matricies together.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Mat1        - Matrix number 1
-*    Mat2        - Matrix number 2
-*    Mat1r       - Matrix number 1 rows
-*    Mat1c       - Matrix number 1 columns
-*    Mat2c       - Matrix number 2 columns
-*
-*  OutPuts       :
-*    Mat3        - Matrix result of Mat1 * Mat2 of size mat1r x mat2c
-*
-*  Locals        :
-*    Row         - Row Index
-*    Col         - Column Index
-*    ktr         - Index
-*
-*  Coupling      :
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE MATMULT     ( Mat1,Mat2, Mat1r,Mat1c,Mat2c,
-     &                         Max1r,Max1c,Max2c, Mat3 )
-        IMPLICIT NONE
-        INTEGER Mat1r,Mat1c,Mat2c, Max1r,Max1c,Max2c
-        REAL*8 Mat1(Max1r,Max1c),Mat2(Max1c,Max2c),Mat3(Max1r,Max2c)
-* -----------------------------  Locals  ------------------------------
-        INTEGER Row,Col,ktr
-
-        ! --------------------  Implementation   ----------------------
-        DO Row=1, Mat1r
-            DO Col= 1, Mat2c
-                Mat3(Row,Col) = 0.0D0
-                DO ktr= 1, Mat1c
-                    Mat3(Row,Col)= Mat3(Row,Col)+Mat1(Row,ktr)*
-     &                                    Mat2(ktr,Col)
-                  ENDDO
-              ENDDO
-
-          ENDDO
-      RETURN
-      END
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE MATADD
-*
-*  this subroutine adds two matricies together.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Mat1        - Matrix number 1
-*    Mat2        - Matrix number 2
-*    Mat1r       - Matrix number 1 rows
-*    Mat1c       - Matrix number 1 columns
-*
-*  OutPuts       :
-*    Mat3        - Matrix result of Mat1 + Mat2
-*                    of size mat1r x mat1c
-*
-*  Locals        :
-*    Row         - Row Index
-*    Col         - Column Index
-*
-*  Coupling      :
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE MATADD    ( Mat1,Mat2, Mat1r,Mat1c,Max1r,Max1c, Mat3 )
-        IMPLICIT NONE
-        INTEGER Mat1r,Mat1c,Max1r,Max1c
-        REAL*8 Mat1(Max1r,Max1c),Mat2(Max1r,Max1c),Mat3(Max1r,Max1c)
-* -----------------------------  Locals  ------------------------------
-        INTEGER Row,Col
-
-        ! --------------------  Implementation   ----------------------
-        DO Row = 1, Mat1r
-
-            DO Col =1, Mat1c
-
-                  Mat3(Row,Col)= Mat1(Row,Col) + Mat2(Row,Col)
-              ENDDO
-
-          ENDDO
-
-      RETURN
-      END
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE MATSUB
-*
-*  this subroutine subtracts two matricies together.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Mat1        - Matrix number 1
-*    Mat2        - Matrix number 2
-*    Mat1r       - Matrix number 1 rows
-*    Mat1c       - Matrix number 1 columns
-*
-*  OutPuts       :
-*    Mat3        - Matrix result of Mat1 + Mat2
-*                    of size mat1r x mat1c
-*
-*  Locals        :
-*    Row         - Row Index
-*    Col         - Column Index
-*
-*  Coupling      :
-*
-* ------------------------------------------------------------------------------
-
-      SUBROUTINE MATSUB    ( Mat1,Mat2, Mat1r,Mat1c,Max1r,Max1c, Mat3 )
-        IMPLICIT NONE
-        INTEGER Mat1r,Mat1c,Max1r,Max1c
-        REAL*8 Mat1(Max1r,Max1c),Mat2(Max1r,Max1c),Mat3(Max1r,Max1c)
-* -----------------------------  Locals  ------------------------------
-        INTEGER Row,Col
-
-        ! --------------------  Implementation   ----------------------
-        DO Row= 1, Mat1r
-            DO Col= 1, Mat1c
-                  Mat3(Row,Col)= Mat1(Row,Col) - Mat2(Row,Col)
-              ENDDO
-
-          ENDDO
-
-      RETURN
-      END
-*
-* ------------------------------------------------------------------------------
-*
-*                           SUBROUTINE MATTRANS
-*
-*  this subroutine finds the transpose of a matrix.
-*
-*  Author        : David Vallado                  719-573-2600    1 Mar 2001
-*
-*  Inputs          Description                    Range / Units
-*    Mat1        - Matrix number 1
-*    Mat1r       - Matrix number 1 rows
-*    Mat1c       - Matrix number 1 columns
-*
-*  OutPuts       :
-*    Mat2        - Matrix result of transpose Mat2
-*
-*  Locals        :
-*    Row         - Row Index
-*    Col         - Column Index
-*
-*  Coupling      :
-*
-* ------------------------------------------------------------------------------  
-
-      SUBROUTINE MATTRANS      ( Mat1, Mat1r,Mat1c,Max1r,Max1c, Mat2 )
-        IMPLICIT NONE
-        INTEGER Mat1r,Mat1c,Max1r,Max1c
-        REAL*8 Mat1(Max1r,Max1c),Mat2(Max1c,Max1r)
-* -----------------------------  Locals  ------------------------------
-        INTEGER Row,Col
-
-        ! --------------------  Implementation   ----------------------
-        DO Row =1, Mat1r
-            DO Col = 1, Mat1c
-                  Mat2(Col,Row)= Mat1(Row,Col)
-              ENDDO
-          ENDDO
-      RETURN
-      END
-*
-      SUBROUTINE MatVecMult (Mat1, Vec2, Mat1r,Mat1c,Max1r,Max1c, Vec3 )
-        IMPLICIT NONE
-        INTEGER Mat1r,Mat1c,Max1r,Max1c
-        REAL*8 Mat1(Max1r,Max1c), Vec2(Max1r), Vec3(Max1r)
-        ! -- local vars ---
-        INTEGER Row, ktr
-
-        DO Row=1, mat1r
-            Vec3(Row) = 0.0D0
-            DO ktr= 1, mat1c
-                Vec3(Row) = Vec3(Row) + Mat1(Row,ktr) * Vec2(ktr)
-              ENDDO
-          ENDDO
-      RETURN
-      END   ! SUBROUTINE MatVecMult
 
 
 * ------------------------------------------------------------------------------
@@ -2660,4 +1860,5 @@
 
       RETURN
       END
-
+      
+      end module astmath
