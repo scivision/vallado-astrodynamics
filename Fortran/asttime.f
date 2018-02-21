@@ -230,97 +230,7 @@
         DAYOFWEEK= IDINT( JD - 7 * IDINT( (JD+1)/7 ) + 2 )
       RETURN
       END
-*
-* -----------------------------------------------------------------------------
-*
-*                           SUBROUTINE DAYLIGHTST
-*
-*  this subroutine finds the dates for switiching to daylight savings time in
-*    a given year. The date is set as the 2nd sunday in march and the first
-*    sunday in november. The DST dates are adjusted -10hr to get 0200, -Zone to get
-*    the local time zone, and -1.0hr to process the stop because the local time is
-*    on DST before a stop.
-*
-*  Author        : David Vallado                  719-573-2600   17 Mar 2007
-*
-*  Inputs          Description                    Range / Units
-*    Year        - Year                           1900 .. 2100
-*    Lon         - SITE longitude (WEST -)        -2Pi to 2Pi rad
-*
-*  Outputs       :
-*    StartDay    - Day in April when DST begins   1 .. 28,29,30,31
-*    StopDay     - Day in October when DST ends   1 .. 28,29,30,31
-*
-*  Locals        :
-*    DW          - Day of the week                1 .. 7
-*    JDStartDST  - Julian date of start           Days from 4713 BC
-*    JDStopDST   - Julian date of stop            Days from 4713 BC
-*    Zone        - Time zone of site. Default
-*                  of 0.0 gives Greenwich         hrs
-*
-*  Coupling      :
-*    JDAY   - Find the Julian Date
-*
-*  References    :
-*    Vallado       2007, 188
-*
-* -----------------------------------------------------------------------------
 
-      SUBROUTINE DAYLIGHTST ( Year, Lon, StartDay, StopDay, JDStartDST,
-     &                        JDStopDST )
-        IMPLICIT NONE
-        INTEGER Year, StartDay, StopDay
-        REAL*8  Lon, JDStartDST, JDStopDST
-* ----------------------------  Locals  -------------------------------
-        REAL*8 Zone
-        INTEGER DW
-        
-
-        ! --------------------  Implementation   ----------------------
-        ! ------- Find time zone information to adjust to a site ------ 
-        Zone= DINT( Lon*Rad2Deg/15.0D0 )
-        IF (Zone .gt. 0.0D0) THEN
-            Zone= Zone - 24.0D0
-          ENDIF
-
-        IF (year .lt. 2007) THEN
-             StartDay= 0
-            Dw = 0
-            DO WHILE ((DW .ne. 1) .and. (StartDay .ne. 7)) ! 1 is Sunday
-                StartDay= StartDay + 1
-                CALL JDay( Year,4,StartDay,12,0,0.0D0, JDStartDST )
-                DW= IDINT( JDStartDST - 7* IDINT( (JDStartDST+1)/7 )+2)
-              ENDDO
-            JDStartDST= JDStartDST - 10.0D0/24.0D0   ! set to 0200 UTC
-
-            StopDay= 32
-            DO WHILE ((DW .ne. 1) .and. (StopDay .ne. 25)) ! 1 is Sunday
-                StopDay= StopDay - 1
-                CALL JDay( Year,10,StopDay,12,0,0.0D0, JDStopDST )
-                DW= IDINT( JDStopDST - 7* IDINT( (JDStopDST+1)/7 ) + 2 )
-              ENDDO
-            JDStopDST= JDStopDST - 10.0D0/24.0D0   ! set to 0200 UTC
-          ELSE
-           StartDay = 7
-            Dw = 0
-            DO WHILE ((DW .ne. 1) .and. (StartDay .ne. 15)) ! 1 is Sunday
-                StartDay= StartDay + 1
-                CALL JDay( Year,3,StartDay,12,0,0.0D0, JDStartDST )
-                DW= IDINT( JDStartDST - 7* IDINT( (JDStartDST+1)/7 )+2)
-              ENDDO
-            JDStartDST= JDStartDST - 10.0D0/24.0D0   ! set to 0200 UTC
-
-            StopDay = 0
-            DO WHILE ((DW .ne. 1) .and. (StopDay .ne. 8)) ! 1 is Sunday
-                StopDay= StopDay + 1
-                CALL JDay( Year,11,StopDay,12,0,0.0D0, JDStopDST )
-                DW= IDINT( JDStopDST - 7* IDINT( (JDStopDST+1)/7 ) + 2 )
-              ENDDO
-            JDStopDST= JDStopDST - 10.0D0/24.0D0   ! set to 0200 UTC
-          ENDIF
-
-      RETURN
-      END
 * -----------------------------------------------------------------------------
 *
 *                           SUBROUTINE JDay
@@ -355,7 +265,8 @@
       SUBROUTINE JDay       ( Year,Mon,Day,Hr,minute, Sec, JD, JDFrac )
         IMPLICIT NONE
         INTEGER Year, Mon, Day, Hr, minute
-        REAL*8  Sec, JD, dtt
+        REAL*8  Sec, dtt
+        real(wp), intent(out) :: JD
         real(wp), intent(out), optional :: JDFrac
 
         ! --------------------  Implementation   ----------------------

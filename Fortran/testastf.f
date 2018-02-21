@@ -1199,22 +1199,6 @@
       END
 
 
-      SUBROUTINE TestDAYLIGHTST
-        IMPLICIT NONE
-        INTEGER Year, StartDay, StopDay
-        REAL*8  JDStartDST, JDStopDST
-
-        Read(10,*) Year
-        Write(20,*)  Year
-
-        CALL DAYLIGHTST  ( Year, StartDay, StopDay, JDStartDST,
-     &                         JDStopDST )
-
-        Write(20,*) '  Results:'
-        Write(20,*) StartDay, StopDay, JDStartDST, JDStopDST
-
-      RETURN
-      END
 
       SUBROUTINE TestjDAY
         IMPLICIT NONE
@@ -1266,14 +1250,14 @@
       END
 
       SUBROUTINE TestINVjDAY
-        IMPLICIT NONE
+
         INTEGER Year, Mon, Day, Hr, Min
-        REAL*8  Sec, JD
+        REAL(wp) ::  Sec, JD
 
         Read(10,*) JD
         Write(20,*)  JD
 
-        CALL INVjDAY( JD, Year,Mon,Day,Hr,Min, Sec )
+        CALL INVjDAY( JD, 0._wp, Year,Mon,Day,Hr,Min, Sec )
 
         Write(20,*) '  Results:'
         Write(20,*) Year,Mon,Day,Hr,Min,Sec
@@ -2386,6 +2370,14 @@ c     &                      IAr96,RAr96, pIAr96,pRAr96 )
      &                         UT1, TUT1, JDUT1, UTC, TAI, TT, TTT,
      &                         JDTT, TDB, TTDB, JDTDB, DDPSi, DDEps,
      &                         LOD, Error )
+     
+    ! ( Year, Mon, Day, Hr, minute, SEC,
+    ! &                         TimeZone, TypeUTIn, DUT1, DAT, xp, yp,
+    ! &                         UT1, TUT1, JDUT1, JDut1F, UTC, TAI, 
+    ! &                         TT, TTT,
+   !  &                         JDTT, JDTTf, TDB, TTDB, JDTDB, JDTDBf, 
+    ! &                         DDPSi, DDEps,
+    ! &                         LOD, Error )
 
         Write(20,*) '  Results:'
         Write(20,*) DUT1,' ',DAT,' ',xp,' ',yp,' '
